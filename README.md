@@ -6,3 +6,7 @@
 
 (How to [install Go](https://golang.org/doc/install). Add `$GOPATH/bin`
 to your `$PATH`.)
+
+### Documentation
+
+-   [Server setup](doc/server.md)
