@@ -8,9 +8,9 @@
 TODO: Genesis block.
 
 -   header of block bodies:
-    https://github.com/ethereum/go-ethereum/blob/master/core/rawdb/schema.go\#L81
+    https://github.com/ethereum/go-ethereum/blob/master/core/rawdb/schema.go#L81
     (use block hash to access it)
 -   declaration of genesis block for goerli (and others):
-    https://github.com/ethereum/go-ethereum/blob/master/core/genesis_alloc.go\#L27
+    https://github.com/ethereum/go-ethereum/blob/master/core/genesis_alloc.go#L27
 -   Decode RLP like this:
-    https://github.com/ethereum/go-ethereum/blob/master/core/genesis.go\#L379
+    https://github.com/ethereum/go-ethereum/blob/master/core/genesis.go#L379
