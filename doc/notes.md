@@ -11,3 +11,10 @@ TODO: Genesis block.
     https://github.com/ethereum/go-ethereum/blob/master/core/genesis_alloc.go#L27
 -   Decode RLP like this:
     https://github.com/ethereum/go-ethereum/blob/master/core/genesis.go#L379
+
+
+### Ethereum testnet sizes
+
+- goerli: ~13 GB
+- rinkeby: ~66 GB
+- ropsten: ~105 GB
