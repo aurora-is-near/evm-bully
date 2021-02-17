@@ -38,6 +38,7 @@ func determineTestnet(goerli, rinkeby, ropsten bool) (string, error) {
 	} else if ropsten {
 		return "ropsten", nil
 	}
+	// use Görli as the default
 	return "goerli", nil
 }
 
@@ -50,6 +51,7 @@ func main() {
 	// define flags
 	block := flag.Uint64("block", defaultBlockHeight, "Block height")
 	datadir := flag.String("datadir", defaultDataDir, "Data directory containing the database to read")
+	genesis := flag.Bool("genesis", false, "Process genesis block")
 	goerli := flag.Bool("goerli", false, "Use the Görli testnet")
 	hash := flag.String("hash", defaultBlockhash, "Block hash")
 	rinkeby := flag.Bool("rinkeby", false, "Use the Rinkeby testnet")
@@ -70,8 +72,14 @@ func main() {
 		fatal(err)
 	}
 
-	// run replayer
-	if err := replayer.ReadTxs(*datadir, testnet, *block, *hash); err != nil {
-		fatal(err)
+	if *genesis {
+		if err := replayer.ProcGenesisBlock(testnet); err != nil {
+			fatal(err)
+		}
+	} else {
+		// run replayer
+		if err := replayer.ReadTxs(*datadir, testnet, *block, *hash); err != nil {
+			fatal(err)
+		}
 	}
 }
