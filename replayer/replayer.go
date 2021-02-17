@@ -59,14 +59,16 @@ func generateTransactions(db ethdb.Database, blocks []common.Hash) error {
 
 // ReadTxs reads transactions from datadir, starting at block with given
 // blockHeight and blockHash.
-func ReadTxs(datadir string, blockHeight uint64, blockHash string) error {
-	log.Info(fmt.Sprintf("opening DB in '%s'", datadir))
-	db, err := rawdb.NewLevelDBDatabaseWithFreezer(datadir, 0, 0, filepath.Join(datadir, "ancient"), "")
+func ReadTxs(datadir, testnet string, blockHeight uint64, blockHash string) error {
+	dbDir := filepath.Join(datadir, testnet, "geth", "chaindata")
+
+	log.Info(fmt.Sprintf("opening DB in '%s'", dbDir))
+	db, err := rawdb.NewLevelDBDatabaseWithFreezer(dbDir, 0, 0, filepath.Join(dbDir, "ancient"), "")
 	if err != nil {
 		return err
 	}
 	defer func() {
-		log.Info(fmt.Sprintf("closing DB in '%s'", datadir))
+		log.Info(fmt.Sprintf("closing DB in '%s'", dbDir))
 		db.Close()
 	}()
 

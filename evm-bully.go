@@ -1,10 +1,10 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/node"
@@ -17,8 +17,29 @@ const (
 )
 
 var (
-	defaultDataDir = filepath.Join(node.DefaultDataDir(), "goerli", "geth", "chaindata")
+	defaultDataDir = node.DefaultDataDir()
 )
+
+func determineTestnet(goerli, rinkeby, ropsten bool) (string, error) {
+	if !goerli && !rinkeby && !ropsten {
+		return "", errors.New("one of the options -goerli, -rinkeby, or -ropsten is mandatory")
+	}
+	if goerli && rinkeby {
+		return "", errors.New("the options -goerli and -rinkeby exclude each other")
+	}
+	if goerli && ropsten {
+		return "", errors.New("the options -goerli and -ropsten exclude each other")
+	}
+	if rinkeby && ropsten {
+		return "", errors.New("the options -rinkeby and -ropsten exclude each other")
+	}
+	if rinkeby {
+		return "rinkeby", nil
+	} else if ropsten {
+		return "ropsten", nil
+	}
+	return "goerli", nil
+}
 
 func fatal(err error) {
 	fmt.Fprintf(os.Stderr, "%s: error: %s\n", os.Args[0], err)
@@ -26,17 +47,31 @@ func fatal(err error) {
 }
 
 func main() {
+	// define flags
 	block := flag.Uint64("block", defaultBlockHeight, "Block height")
 	datadir := flag.String("datadir", defaultDataDir, "Data directory containing the database to read")
+	goerli := flag.Bool("goerli", false, "Use the Görli testnet")
 	hash := flag.String("hash", defaultBlockhash, "Block hash")
+	rinkeby := flag.Bool("rinkeby", false, "Use the Rinkeby testnet")
+	ropsten := flag.Bool("ropsten", false, "Use the Ropsten testnet")
 	verbose := flag.Bool("v", false, "Be verbose")
 
+	// parse flags
 	flag.Parse()
 
+	// enable logging, if necessary
 	if *verbose {
 		log.Root().SetHandler(log.StdoutHandler)
 	}
-	if err := replayer.ReadTxs(*datadir, *block, *hash); err != nil {
+
+	// determine testnet name from flags
+	testnet, err := determineTestnet(*goerli, *rinkeby, *ropsten)
+	if err != nil {
+		fatal(err)
+	}
+
+	// run replayer
+	if err := replayer.ReadTxs(*datadir, testnet, *block, *hash); err != nil {
 		fatal(err)
 	}
 }
