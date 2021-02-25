@@ -44,11 +44,21 @@ func traverse(
 // generateTransactions starting at genesis block.
 func generateTransactions(db ethdb.Database, blocks []common.Hash) error {
 	for blockHeight, blockHash := range blocks {
+		// read block from DB
 		b := rawdb.ReadBlock(db, blockHash, uint64(blockHeight))
 		if b == nil {
 			return fmt.Errorf("cannot read block at height %d with hash %s",
 				blockHeight, blockHash.Hex())
 		}
+
+		// block context
+		c, err := getBlockContext(b)
+		if err != nil {
+			return err
+		}
+		c.dump()
+
+		// transactions
 		for i, tx := range b.Transactions() {
 			fmt.Printf("b=%d tx=%d chainid=%s data=%s\n", blockHeight, i,
 				tx.ChainId().String(), hex.EncodeToString(tx.Data()))
