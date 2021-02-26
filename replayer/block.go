@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-type context struct {
+type blockContext struct {
 	coinbase   common.Address // block.coinbase
 	timestamp  uint64         // block.timestamp
 	number     uint64         // block.number
@@ -16,8 +16,8 @@ type context struct {
 	hash       common.Hash    // hash = block.blockHash(blockNumber)
 }
 
-func getBlockContext(b *types.Block) (*context, error) {
-	var c context
+func getBlockContext(b *types.Block) (*blockContext, error) {
+	var c blockContext
 	var err error
 	h := b.Header()
 	c.coinbase = b.Coinbase()
@@ -35,7 +35,7 @@ func getBlockContext(b *types.Block) (*context, error) {
 	return &c, nil
 }
 
-func (c *context) dump() {
+func (c *blockContext) dump() {
 	fmt.Println("block context:")
 	fmt.Printf("block.coinbase=%s\n", c.coinbase.String())
 	fmt.Printf("block.timestamp=%d\n", c.timestamp)
