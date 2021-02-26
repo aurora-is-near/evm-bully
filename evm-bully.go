@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 )
 
 const (
+	defaultEndpoint    = "http://localhost:8545"
 	defaultBlockHeight = 100000
 	defaultBlockhash   = "0x94b9c7be22783a3ee1e1f1f31e35f7de4612905d6fd24d3fe90a26091dca43fe"
 )
@@ -51,6 +53,7 @@ func main() {
 	// define flags
 	block := flag.Uint64("block", defaultBlockHeight, "Block height")
 	datadir := flag.String("datadir", defaultDataDir, "Data directory containing the database to read")
+	endpoint := flag.String("endpoint", defaultEndpoint, "Set default JSON-RPC endpoint")
 	genesis := flag.Bool("genesis", false, "Process genesis block")
 	goerli := flag.Bool("goerli", false, "Use the Görli testnet")
 	hash := flag.String("hash", defaultBlockhash, "Block hash")
@@ -78,7 +81,8 @@ func main() {
 		}
 	} else {
 		// run replayer
-		if err := replayer.ReadTxs(*datadir, testnet, *block, *hash); err != nil {
+		err := replayer.ReadTxs(context.Background(), *endpoint, *datadir, testnet, *block, *hash)
+		if err != nil {
 			fatal(err)
 		}
 	}

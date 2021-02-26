@@ -2,6 +2,7 @@
 package replayer
 
 import (
+	"context"
 	"encoding/hex"
 	"fmt"
 	"path/filepath"
@@ -9,8 +10,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 // traverse blockchain backwards starting at block b with given blockHeight
@@ -42,7 +45,19 @@ func traverse(
 }
 
 // generateTransactions starting at genesis block.
-func generateTransactions(db ethdb.Database, blocks []common.Hash) error {
+func generateTransactions(
+	ctx context.Context,
+	endpoint string,
+	db ethdb.Database,
+	blocks []common.Hash,
+) error {
+	c, err := rpc.DialContext(ctx, endpoint)
+	if err != nil {
+		return err
+	}
+	ec := ethclient.NewClient(c)
+	defer ec.Close()
+
 	for blockHeight, blockHash := range blocks {
 		// read block from DB
 		b := rawdb.ReadBlock(db, blockHash, uint64(blockHeight))
@@ -62,14 +77,25 @@ func generateTransactions(db ethdb.Database, blocks []common.Hash) error {
 		for i, tx := range b.Transactions() {
 			fmt.Printf("b=%d tx=%d chainid=%s data=%s\n", blockHeight, i,
 				tx.ChainId().String(), hex.EncodeToString(tx.Data()))
+
+			// submit transaction to JSON-RPC endpoint
+			if err := ec.SendTransaction(ctx, tx); err != nil {
+				return err
+			}
 		}
+
 	}
 	return nil
 }
 
 // ReadTxs reads transactions from datadir, starting at block with given
 // blockHeight and blockHash.
-func ReadTxs(datadir, testnet string, blockHeight uint64, blockHash string) error {
+func ReadTxs(
+	ctx context.Context,
+	endpoint, datadir, testnet string,
+	blockHeight uint64,
+	blockHash string,
+) error {
 	dbDir := filepath.Join(datadir, testnet, "geth", "chaindata")
 
 	log.Info(fmt.Sprintf("opening DB in '%s'", dbDir))
@@ -102,7 +128,7 @@ func ReadTxs(datadir, testnet string, blockHeight uint64, blockHash string) erro
 	blocks = append(blocks, common.HexToHash(blockHash))
 
 	// generate transactions starting at genesis block
-	if err := generateTransactions(db, blocks); err != nil {
+	if err := generateTransactions(ctx, endpoint, db, blocks); err != nil {
 		return err
 	}
 
