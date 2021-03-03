@@ -1,25 +1,13 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
 
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/node"
-	"github.com/near/evm-bully/replayer"
-)
-
-const (
-	defaultEndpoint    = "http://localhost:8545"
-	defaultBlockHeight = 100000
-	defaultBlockhash   = "0x94b9c7be22783a3ee1e1f1f31e35f7de4612905d6fd24d3fe90a26091dca43fe"
-)
-
-var (
-	defaultDataDir = node.DefaultDataDir()
+	"github.com/near/evm-bully/command"
 )
 
 func determineTestnet(goerli, rinkeby, ropsten bool) (string, error) {
@@ -49,19 +37,25 @@ func fatal(err error) {
 	os.Exit(1)
 }
 
+func usage() {
+	cmd := os.Args[0] + " [flags]"
+	fmt.Fprintf(os.Stderr, "Usage: %s genesis\n", cmd)
+	fmt.Fprintf(os.Stderr, "       %s replay\n", cmd)
+	fmt.Fprintf(os.Stderr, "       %s blocknumber\n", cmd)
+	fmt.Fprintf(os.Stderr, "Stress test and benchmark the NEAR EVM.\n")
+	fmt.Fprintf(os.Stderr, "Flags:\n")
+	flag.PrintDefaults()
+}
+
 func main() {
 	// define flags
-	block := flag.Uint64("block", defaultBlockHeight, "Block height")
-	datadir := flag.String("datadir", defaultDataDir, "Data directory containing the database to read")
-	endpoint := flag.String("endpoint", defaultEndpoint, "Set default JSON-RPC endpoint")
-	genesis := flag.Bool("genesis", false, "Process genesis block")
 	goerli := flag.Bool("goerli", false, "Use the Görli testnet")
-	hash := flag.String("hash", defaultBlockhash, "Block hash")
 	rinkeby := flag.Bool("rinkeby", false, "Use the Rinkeby testnet")
 	ropsten := flag.Bool("ropsten", false, "Use the Ropsten testnet")
 	verbose := flag.Bool("v", false, "Be verbose")
 
 	// parse flags
+	flag.Usage = usage
 	flag.Parse()
 
 	// enable logging, if necessary
@@ -75,15 +69,29 @@ func main() {
 		fatal(err)
 	}
 
-	if *genesis {
-		if err := replayer.ProcGenesisBlock(testnet); err != nil {
+	// makes sure a command was given
+	if flag.NArg() == 0 {
+		usage()
+		os.Exit(2)
+	}
+
+	// call command
+	argv0 := os.Args[0] + " " + flag.Args()[0]
+	args := flag.Args()[1:]
+	switch flag.Arg(0) {
+	case "genesis":
+		err = command.Genesis(testnet, argv0, args...)
+	case "replay":
+		err = command.Replay(testnet, argv0, args...)
+	case "blocknumber":
+		err = command.BlockNumber(testnet, argv0, args...)
+	default:
+		usage()
+	}
+	if err != nil {
+		if err != flag.ErrHelp {
 			fatal(err)
 		}
-	} else {
-		// run replayer
-		err := replayer.ReadTxs(context.Background(), *endpoint, *datadir, testnet, *block, *hash)
-		if err != nil {
-			fatal(err)
-		}
+		os.Exit(2)
 	}
 }
