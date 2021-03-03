@@ -10,7 +10,8 @@ import (
 )
 
 // Replay implements the 'replay' command.
-func Replay(net, argv0 string, args ...string) error {
+func Replay(argv0 string, args ...string) error {
+  var f testnetFlags
   fs := flag.NewFlagSet(argv0, flag.ContinueOnError)
   fs.Usage = func() {
     fmt.Fprintf(os.Stderr, "Usage: %s\n", argv0)
@@ -21,7 +22,12 @@ func Replay(net, argv0 string, args ...string) error {
   datadir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
   endpoint := fs.String("endpoint", defaultEndpoint, "Set JSON-RPC endpoint")
   hash := fs.String("hash", defaultBlockhash, "Block hash")
+  f.registerFlags(fs)
   if err := fs.Parse(args); err != nil {
+    return err
+  }
+  testnet, err := f.determineTestnet()
+  if err != nil {
     return err
   }
   if fs.NArg() != 0 {
@@ -29,5 +35,5 @@ func Replay(net, argv0 string, args ...string) error {
     return flag.ErrHelp
   }
   // run replayer
-  return replayer.ReadTxs(context.Background(), *endpoint, *datadir, net, *block, *hash)
+  return replayer.ReadTxs(context.Background(), *endpoint, *datadir, testnet, *block, *hash)
 }
