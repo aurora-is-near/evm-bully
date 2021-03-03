@@ -84,7 +84,7 @@ func main() {
 	case "replay":
 		err = command.Replay(testnet, argv0, args...)
 	case "blocknumber":
-		err = command.BlockNumber(testnet, argv0, args...)
+		err = command.BlockNumber(argv0, args...)
 	default:
 		usage()
 	}

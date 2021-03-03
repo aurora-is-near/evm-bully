@@ -19,7 +19,7 @@ func Replay(net, argv0 string, args ...string) error {
   }
   block := fs.Uint64("block", defaultBlockHeight, "Block height")
   datadir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
-  endpoint := fs.String("endpoint", defaultEndpoint, "Set default JSON-RPC endpoint")
+  endpoint := fs.String("endpoint", defaultEndpoint, "Set JSON-RPC endpoint")
   hash := fs.String("hash", defaultBlockhash, "Block hash")
   if err := fs.Parse(args); err != nil {
     return err
