@@ -78,7 +78,7 @@ func generateTransactions(
 			fmt.Printf("b=%d tx=%d chainid=%s data=%s\n", blockHeight, i,
 				tx.ChainId().String(), hex.EncodeToString(tx.Data()))
 
-			// submit transaction to JSON-RPC endpoint
+			// submit transaction to JSON-RPC endpoint ("eth_sendRawTransaction")
 			if err := ec.SendTransaction(ctx, tx); err != nil {
 				return err
 			}
