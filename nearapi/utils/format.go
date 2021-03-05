@@ -21,7 +21,7 @@ func FormatNearAmount(balance string) (string, error) {
 	var bn big.Int
 	_, suc := bn.SetString(balance, 10)
 	if !suc {
-		return "", fmt.Errorf("util: cannot parse NEAR balance: %s", balance)
+		return "", fmt.Errorf("utils: cannot parse NEAR balance: %s", balance)
 	}
 	balance = bn.String()
 	wholeStr := "0"
@@ -39,6 +39,7 @@ func FormatNearAmount(balance string) (string, error) {
 	return res, nil
 }
 
+// formatWithCommas returns a human-readable value with commas.
 func formatWithCommas(value string) string {
 	res := ""
 	for len(value) > 3 {
@@ -46,4 +47,27 @@ func formatWithCommas(value string) string {
 		value = value[:len(value)-3]
 	}
 	return value + res
+}
+
+// ParseNearAmount converts a human readable NEAR amount (potentially
+// factional) to internal indivisible units. Effectively this multiplies given
+// amount by NearNomination. Returns the parsed yoctoⓃ amount.
+func ParseNearAmount(amount string) (string, error) {
+	amount = cleanupAmount(amount)
+	parts := strings.Split(amount, ".")
+	wholePart := parts[0]
+	fracPart := ""
+	if len(parts) == 2 {
+		fracPart = parts[1]
+	}
+	if len(parts) > 2 || len(fracPart) > NearNominationExp {
+		return "", fmt.Errorf("utils: cannot parse as NEAR amount: %s", amount)
+	}
+	res := wholePart + fracPart + strings.Repeat("0", NearNominationExp-len(fracPart))
+	return strings.TrimLeft(res, "0"), nil
+}
+
+// cleanupAmount removes commas from the input amount and returns the result.
+func cleanupAmount(amount string) string {
+	return strings.Replace(amount, ",", "", -1)
 }
