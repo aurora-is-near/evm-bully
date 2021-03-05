@@ -1,16 +1,20 @@
 package nearapi
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 
 	"github.com/ybbus/jsonrpc/v2"
 )
 
+// Connection allows to do JSON-RPC to a NEAR endpoint.
 type Connection struct {
 	c jsonrpc.RPCClient
 }
 
+// NewConnection returns a new connection for JSON-RPC calls to the NEAR
+// endpoint with the given nodeURL.
 func NewConnection(nodeURL string) *Connection {
 	var c Connection
 	c.c = jsonrpc.NewClient(nodeURL)
@@ -36,17 +40,28 @@ func (c *Connection) call(method string, params ...interface{}) (interface{}, er
 	return res.Result, nil
 }
 
-func (c *Connection) Block() (interface{}, error) {
+// Block queries network and returns latest block.
+//
+// For details see https://docs.near.org/docs/interaction/rpc#block
+func (c *Connection) Block() (map[string]interface{}, error) {
 	res, err := c.call("block", map[string]string{
 		"finality": "final",
 	})
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	r, ok := res.(map[string]interface{})
+	if !ok {
+		return nil, ErrNotObject
+	}
+	return r, nil
 }
 
-func (c *Connection) State(accountID string) (interface{}, error) {
+// State returns basic account information.
+//
+// For details see
+// https://docs.near.org/docs/develop/front-end/rpc#accounts--contracts
+func (c *Connection) State(accountID string) (map[string]interface{}, error) {
 	res, err := c.call("query", map[string]string{
 		"request_type": "view_account",
 		"finality":     "final",
@@ -55,5 +70,45 @@ func (c *Connection) State(accountID string) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return res, nil
+	r, ok := res.(map[string]interface{})
+	if !ok {
+		return nil, ErrNotObject
+	}
+	return r, nil
+}
+
+// SendTransaction sends a signed transaction and waits until the transaction
+// is fully complete. Has a 10 second timeout.
+//
+// For details see
+// https://docs.near.org/docs/develop/front-end/rpc#send-transaction-await
+func (c *Connection) SendTransaction(signedTransaction []byte) (map[string]interface{}, error) {
+	res, err := c.call("broadcast_tx_commit",
+		base64.StdEncoding.EncodeToString(signedTransaction))
+	if err != nil {
+		return nil, err
+	}
+	r, ok := res.(map[string]interface{})
+	if !ok {
+		return nil, ErrNotObject
+	}
+	return r, nil
+}
+
+// SendTransactionAsync sends a signed transaction and immediately returns a
+// transaction hash.
+//
+// For details see
+// https://docs.near.org/docs/develop/front-end/rpc#send-transaction-async
+func (c *Connection) SendTransactionAsync(signedTransaction []byte) (string, error) {
+	res, err := c.call("broadcast_tx_async",
+		base64.StdEncoding.EncodeToString(signedTransaction))
+	if err != nil {
+		return "", err
+	}
+	r, ok := res.(string)
+	if !ok {
+		return "", ErrNotString
+	}
+	return r, nil
 }

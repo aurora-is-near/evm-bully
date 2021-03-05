@@ -32,14 +32,13 @@ func State(argv0 string, args ...string) error {
   if err != nil {
     return err
   }
-  m := res.(map[string]interface{})
-  amount, ok := m["amount"].(string)
+  amount, ok := res["amount"].(string)
   if ok {
     fa, err := utils.FormatNearAmount(amount)
     if err != nil {
       return err
     }
-    m["formattedAmount"] = fa
+    res["formattedAmount"] = fa
   }
   jsn, err := json.MarshalIndent(res, "", "  ")
   if err != nil {
