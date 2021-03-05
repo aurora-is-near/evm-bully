@@ -1,3 +1,4 @@
+// Package nearapi allows to interact with the NEAR platform via RPC calls.
 package nearapi
 
 import (
