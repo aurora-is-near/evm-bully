@@ -36,6 +36,16 @@ func (c *Connection) call(method string, params ...interface{}) (interface{}, er
 	return res.Result, nil
 }
 
+func (c *Connection) Block() (interface{}, error) {
+	res, err := c.call("block", map[string]string{
+		"finality": "final",
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func (c *Connection) State(accountID string) (interface{}, error) {
 	res, err := c.call("query", map[string]string{
 		"request_type": "view_account",
