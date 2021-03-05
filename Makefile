@@ -1,4 +1,4 @@
-.PHONY: all install fmt
+.PHONY: all install fmt test
 
 all:
 	env GO111MODULE=on go build -v .
@@ -13,3 +13,6 @@ fmt:
 	mv tmp.md doc/server.md
 	pandoc -o tmp.md -s doc/notes.md
 	mv tmp.md doc/notes.md
+
+test:
+	env GO111MODULE=on go test -v ./...
