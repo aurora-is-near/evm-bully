@@ -7,7 +7,7 @@ import (
   "os"
 
   "github.com/near/evm-bully/nearapi"
-  "github.com/near/evm-bully/nearapi/util"
+  "github.com/near/evm-bully/nearapi/utils"
 )
 
 // State implements the 'state' command.
@@ -35,7 +35,7 @@ func State(argv0 string, args ...string) error {
   m := res.(map[string]interface{})
   amount, ok := m["amount"].(string)
   if ok {
-    fa, err := util.FormatNearAmount(amount)
+    fa, err := utils.FormatNearAmount(amount)
     if err != nil {
       return err
     }
