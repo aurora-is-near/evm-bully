@@ -19,7 +19,6 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "Usage: %s genesis\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s replay\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s blocknumber\n", cmd)
-	fmt.Fprintf(os.Stderr, "       %s chainid\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s state <accountId>\n", cmd)
 	fmt.Fprintf(os.Stderr, "Stress test and benchmark the NEAR EVM.\n")
 	fmt.Fprintf(os.Stderr, "Global flags:\n")
@@ -56,8 +55,6 @@ func main() {
 		err = command.Replay(argv0, args...)
 	case "blocknumber":
 		err = command.BlockNumber(argv0, args...)
-	case "chainid":
-		err = command.ChainID(argv0, args...)
 	case "state":
 		err = command.State(argv0, args...)
 	default:
