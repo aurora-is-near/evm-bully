@@ -22,6 +22,8 @@ func NewConnection(nodeURL string) *Connection {
 	return &c
 }
 
+// call uses the connection c to call the given method with params.
+// It handles all possible error cases and returns the result (which cannot be nil).
 func (c *Connection) call(method string, params ...interface{}) (interface{}, error) {
 	res, err := c.c.Call(method, params...)
 	if err != nil {
