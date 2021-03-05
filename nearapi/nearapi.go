@@ -17,12 +17,8 @@ func NewConnection(nodeURL string) *Connection {
 	return &c
 }
 
-func (c *Connection) State(accountID string) (interface{}, error) {
-	res, err := c.c.Call("query", map[string]string{
-		"request_type": "view_account",
-		"finality":     "final",
-		"account_id":   accountID,
-	})
+func (c *Connection) call(method string, params ...interface{}) (interface{}, error) {
+	res, err := c.c.Call(method, params...)
 	if err != nil {
 		return nil, err
 	}
@@ -38,4 +34,16 @@ func (c *Connection) State(accountID string) (interface{}, error) {
 		return nil, errors.New("nearapi: JSON-RPC result is nil")
 	}
 	return res.Result, nil
+}
+
+func (c *Connection) State(accountID string) (interface{}, error) {
+	res, err := c.call("query", map[string]string{
+		"request_type": "view_account",
+		"finality":     "final",
+		"account_id":   accountID,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
 }
