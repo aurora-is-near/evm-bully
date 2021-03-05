@@ -7,6 +7,7 @@ import (
   "os"
 
   "github.com/near/evm-bully/nearapi"
+  "github.com/near/evm-bully/nearapi/util"
 )
 
 // State implements the 'state' command.
@@ -30,6 +31,15 @@ func State(argv0 string, args ...string) error {
   res, err := c.State(accountID)
   if err != nil {
     return err
+  }
+  m := res.(map[string]interface{})
+  amount, ok := m["amount"].(string)
+  if ok {
+    fa, err := util.FormatNearAmount(amount)
+    if err != nil {
+      return err
+    }
+    m["formattedAmount"] = fa
   }
   jsn, err := json.MarshalIndent(res, "", "  ")
   if err != nil {
