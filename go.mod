@@ -1,4 +1,4 @@
-module github.com/near/evm-bully
+module github.com/aurora-is-near/evm-bully
 
 go 1.15
 

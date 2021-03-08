@@ -6,7 +6,7 @@ import (
   "fmt"
   "os"
 
-  "github.com/near/evm-bully/nearapi"
+  "github.com/aurora-is-near/evm-bully/nearapi"
 )
 
 // Block implements the 'block' command.

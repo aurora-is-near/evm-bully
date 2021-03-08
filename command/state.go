@@ -6,8 +6,8 @@ import (
   "fmt"
   "os"
 
-  "github.com/near/evm-bully/nearapi"
-  "github.com/near/evm-bully/nearapi/utils"
+  "github.com/aurora-is-near/evm-bully/nearapi"
+  "github.com/aurora-is-near/evm-bully/nearapi/utils"
 )
 
 // State implements the 'state' command.

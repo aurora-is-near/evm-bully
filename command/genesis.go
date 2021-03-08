@@ -5,7 +5,7 @@ import (
   "fmt"
   "os"
 
-  "github.com/near/evm-bully/replayer"
+  "github.com/aurora-is-near/evm-bully/replayer"
 )
 
 // Genesis implements the 'genesis' command.

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/aurora-is-near/evm-bully/command"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/near/evm-bully/command"
 )
 
 func fatal(err error) {
