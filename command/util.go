@@ -5,6 +5,12 @@ import (
 	"flag"
 )
 
+type nodeURLFlag string
+
+func (n *nodeURLFlag) registerFlag(fs *flag.FlagSet) {
+	fs.StringVar((*string)(n), "nodeUrl", defaultNodeURL, "NEAR node URL")
+}
+
 type testnetFlags struct {
 	goerli  bool
 	rinkeby bool

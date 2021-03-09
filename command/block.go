@@ -11,13 +11,14 @@ import (
 
 // Block implements the 'block' command.
 func Block(argv0 string, args ...string) error {
+  var nodeURL nodeURLFlag
   fs := flag.NewFlagSet(argv0, flag.ContinueOnError)
   fs.Usage = func() {
     fmt.Fprintf(os.Stderr, "Usage: %s\n", argv0)
     fmt.Fprintf(os.Stderr, "Queries network for latest block details.\n")
     fs.PrintDefaults()
   }
-  nodeURL := fs.String("nodeUrl", defaultNodeURL, "NEAR node URL")
+  nodeURL.registerFlag(fs)
   if err := fs.Parse(args); err != nil {
     return err
   }
@@ -25,7 +26,7 @@ func Block(argv0 string, args ...string) error {
     fs.Usage()
     return flag.ErrHelp
   }
-  c := nearapi.NewConnection(*nodeURL)
+  c := nearapi.NewConnection(string(nodeURL))
   res, err := c.Block()
   if err != nil {
     return err
