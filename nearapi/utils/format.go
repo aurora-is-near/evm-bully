@@ -71,3 +71,21 @@ func ParseNearAmount(amount string) (string, error) {
 func cleanupAmount(amount string) string {
 	return strings.Replace(amount, ",", "", -1)
 }
+
+// ParseNearAmountAsBigInt converts a human readable NEAR amount (potentially
+// factional) to internal indivisible units. Effectively this multiplies
+// given amount by NearNomination. Returns the parsed yoctoⓃ amount.
+func ParseNearAmountAsBigInt(amount string) (*big.Int, error) {
+	res, err := ParseNearAmount(amount)
+	if err != nil {
+		return nil, err
+	}
+	var b big.Int
+	_, ok := b.SetString(res, 10)
+	if !ok {
+		// Panic, because ParseNearAmount should never return a string that cannot
+		// be converted to a big.Int.
+		panic(fmt.Errorf("utils: cannot convert ParseNearAmount(%s) result to big.Int", amount))
+	}
+	return &b, nil
+}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,6 +25,8 @@ type Account struct {
 	privKey    ed25519.PrivateKey
 }
 
+// LoadAccount loads the credential for the receiverID account, to be used via
+// connection c, and returns it.
 func LoadAccount(c *Connection, receiverID string) (*Account, error) {
 	var a Account
 	a.conn = c
@@ -77,5 +80,11 @@ func (a *Account) readAccessKey(filename, receiverID string) error {
 	if !bytes.Equal(pubKey, a.privKey.Public().(ed25519.PublicKey)) {
 		return fmt.Errorf("nearapi: public_key does not match private_key: %s", filename)
 	}
+	return nil
+}
+
+// SendMoney sends amount NEAR from account to receiverID.
+func (a *Account) SendMoney(receiverID string, amount *big.Int) error {
+	// TODO
 	return nil
 }

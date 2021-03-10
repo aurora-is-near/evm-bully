@@ -6,6 +6,7 @@ import (
   "os"
 
   "github.com/aurora-is-near/evm-bully/nearapi"
+  "github.com/aurora-is-near/evm-bully/nearapi/utils"
 )
 
 // Send implements the 'send' command.
@@ -30,10 +31,13 @@ func Send(argv0 string, args ...string) error {
   amount := fs.Arg(2)
   fmt.Printf("%s %s %s %s\n", nodeURL, sender, receiver, amount)
   c := nearapi.NewConnection(string(nodeURL))
-  _, err := nearapi.LoadAccount(c, sender)
+  a, err := nearapi.LoadAccount(c, sender)
   if err != nil {
     return err
   }
-  // TODO: send money
-  return nil
+  amnt, err := utils.ParseNearAmountAsBigInt(amount)
+  if err != nil {
+    return err
+  }
+  return a.SendMoney(receiver, amnt)
 }
