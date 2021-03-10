@@ -6,16 +6,17 @@ import (
 )
 
 func TestReadAccessKey(t *testing.T) {
+	var a Account
 	receiverID := "test-account.testnet"
 	fn := filepath.Join("testdata", receiverID+".json")
-	_, err := ReadAccessKey(fn, receiverID)
+	err := a.readAccessKey(fn, receiverID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	receiverID = "evm.test-account.testnet"
 	fn = filepath.Join("testdata", receiverID+".json")
-	_, err = ReadAccessKey(fn, receiverID)
+	err = a.readAccessKey(fn, receiverID)
 	if err != nil {
 		t.Fatal(err)
 	}

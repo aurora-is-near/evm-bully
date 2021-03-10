@@ -4,6 +4,8 @@ import (
   "flag"
   "fmt"
   "os"
+
+  "github.com/aurora-is-near/evm-bully/nearapi"
 )
 
 // Send implements the 'send' command.
@@ -27,5 +29,11 @@ func Send(argv0 string, args ...string) error {
   receiver := fs.Arg(1)
   amount := fs.Arg(2)
   fmt.Printf("%s %s %s %s\n", nodeURL, sender, receiver, amount)
+  c := nearapi.NewConnection(string(nodeURL))
+  _, err := nearapi.LoadAccount(c, sender)
+  if err != nil {
+    return err
+  }
+  // TODO: send money
   return nil
 }

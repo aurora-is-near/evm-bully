@@ -20,52 +20,62 @@ type Account struct {
 	AccountID  string `json:"account_id"`
 	PublicKey  string `json:"public_key"`
 	PrivateKey string `json:"private_key"`
+	conn       *Connection
+	privKey    ed25519.PrivateKey
 }
 
-func FindAccessKey(receiverID string) (ed25519.PrivateKey, error) {
+func LoadAccount(c *Connection, receiverID string) (*Account, error) {
+	var a Account
+	a.conn = c
+	if err := a.findAccessKey(receiverID); err != nil {
+		return nil, err
+	}
+	return &a, nil
+}
+
+func (a *Account) findAccessKey(receiverID string) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// TODO: extend this function to allow loading from "local" as well
 	fn := filepath.Join(home, ".near-credentials", "default", receiverID+".json")
-	return ReadAccessKey(fn, receiverID)
+	return a.readAccessKey(fn, receiverID)
 }
 
-func ReadAccessKey(filename, receiverID string) (ed25519.PrivateKey, error) {
+func (a *Account) readAccessKey(filename, receiverID string) error {
 	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	var a Account
 	err = json.Unmarshal(buf, &a)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	// account ID
 	if a.AccountID != receiverID {
-		return nil, fmt.Errorf("nearapi: parsed account_id '%s' does not match with receiverID '%s'",
+		return fmt.Errorf("nearapi: parsed account_id '%s' does not match with receiverID '%s'",
 			a.AccountID, receiverID)
 	}
 	// public key
 	if !strings.HasPrefix(a.PublicKey, ed25519Prefix) {
-		return nil, fmt.Errorf("nearapi: parsed public_key '%s' is not an Ed25519 key",
+		return fmt.Errorf("nearapi: parsed public_key '%s' is not an Ed25519 key",
 			a.PublicKey)
 	}
 	pubKey := base58.Decode(strings.TrimPrefix(a.PublicKey, ed25519Prefix))
 	// private key
 	if !strings.HasPrefix(a.PrivateKey, ed25519Prefix) {
-		return nil, fmt.Errorf("nearapi: parsed private_key '%s' is not an Ed25519 key",
+		return fmt.Errorf("nearapi: parsed private_key '%s' is not an Ed25519 key",
 			a.PrivateKey)
 	}
-	privKey := base58.Decode(strings.TrimPrefix(a.PrivateKey, ed25519Prefix))
+	privateKey := base58.Decode(strings.TrimPrefix(a.PrivateKey, ed25519Prefix))
 	if err != nil {
-		return nil, err
+		return err
 	}
-	privateKey := ed25519.PrivateKey(privKey)
+	a.privKey = ed25519.PrivateKey(privateKey)
 	// make sure keys match
-	if !bytes.Equal(pubKey, privateKey.Public().(ed25519.PublicKey)) {
-		return nil, fmt.Errorf("nearapi: public_key does not match private_key: %s", filename)
+	if !bytes.Equal(pubKey, a.privKey.Public().(ed25519.PublicKey)) {
+		return fmt.Errorf("nearapi: public_key does not match private_key: %s", filename)
 	}
-	return privateKey, nil
+	return nil
 }
