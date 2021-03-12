@@ -60,7 +60,7 @@ func (c *Connection) Block() (map[string]interface{}, error) {
 	return r, nil
 }
 
-// State returns basic account information.
+// State returns basic account information for given accountID.
 //
 // For details see
 // https://docs.near.org/docs/develop/front-end/rpc#accounts--contracts
@@ -112,6 +112,28 @@ func (c *Connection) SendTransactionAsync(signedTransaction []byte) (string, err
 	r, ok := res.(string)
 	if !ok {
 		return "", ErrNotString
+	}
+	return r, nil
+}
+
+// Returns information about a single access key for given accountID and publicKey.
+// The publicKey must have a signature algorithm prefix (like "ed25519:").
+//
+// For details see
+// https://docs.near.org/docs/develop/front-end/rpc#view-access-key
+func (c *Connection) ViewAccessKey(accountID, publicKey string) (map[string]interface{}, error) {
+	res, err := c.call("query", map[string]string{
+		"request_type": "view_access_key",
+		"finality":     "final",
+		"account_id":   accountID,
+		"public_key":   publicKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+	r, ok := res.(map[string]interface{})
+	if !ok {
+		return nil, ErrNotObject
 	}
 	return r, nil
 }
