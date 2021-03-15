@@ -7,8 +7,8 @@ import (
 
 const (
 	defaultEndpoint    = "http://localhost:8545"
-	defaultBlockHeight = 100000
-	defaultBlockhash   = "0x94b9c7be22783a3ee1e1f1f31e35f7de4612905d6fd24d3fe90a26091dca43fe"
+	defaultBlockHeight = 4445666
+	defaultBlockhash   = "0xb43dc6e5961f89b9f3c98b15d389d88dad8b0067fae76afcb5c0738aa21bd8be"
 	defaultNodeURL     = "https://rpc.testnet.near.org"
 )
 
