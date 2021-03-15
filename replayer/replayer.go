@@ -95,6 +95,7 @@ func ReadTxs(
 	endpoint, datadir, testnet string,
 	blockHeight uint64,
 	blockHash string,
+	defrost bool,
 ) error {
 	dbDir := filepath.Join(datadir, testnet, "geth", "chaindata")
 
@@ -108,8 +109,10 @@ func ReadTxs(
 		db.Close()
 	}()
 
-	// TODO: we might have to "defrost" the database first in some cases
-	// rawdb.InitDatabaseFromFreezer(db)
+	// "defrost" the database first
+	if defrost {
+		rawdb.InitDatabaseFromFreezer(db)
+	}
 
 	// read starting block
 	b := rawdb.ReadBlock(db, common.HexToHash(blockHash), blockHeight)
