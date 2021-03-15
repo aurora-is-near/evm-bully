@@ -9,6 +9,10 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
+func init() {
+	log.Root().SetHandler(log.DiscardHandler())
+}
+
 func fatal(err error) {
 	fmt.Fprintf(os.Stderr, "%s: error: %s\n", os.Args[0], err)
 	os.Exit(1)

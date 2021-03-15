@@ -5,8 +5,10 @@ import (
   "flag"
   "fmt"
   "os"
+  "path/filepath"
 
   "github.com/aurora-is-near/evm-bully/replayer"
+  "github.com/frankbraun/codechain/util/homedir"
 )
 
 // Replay implements the 'replay' command.
@@ -19,7 +21,7 @@ func Replay(argv0 string, args ...string) error {
     fs.PrintDefaults()
   }
   block := fs.Uint64("block", defaultBlockHeight, "Block height")
-  datadir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
+  dataDir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
   defrost := fs.Bool("defrost", false, "Defrost the database first")
   endpoint := fs.String("endpoint", defaultEndpoint, "Set JSON-RPC endpoint")
   hash := fs.String("hash", defaultBlockhash, "Block hash")
@@ -35,7 +37,14 @@ func Replay(argv0 string, args ...string) error {
     fs.Usage()
     return flag.ErrHelp
   }
+  // determine cache directory
+  homeDir := homedir.Get("evm-bully")
+  cacheDir := filepath.Join(homeDir, testnet)
+  // make sure cache directory exists
+  if err := os.MkdirAll(cacheDir, 0755); err != nil {
+    return err
+  }
   // run replayer
-  return replayer.ReadTxs(context.Background(), *endpoint, *datadir, testnet,
-    *block, *hash, *defrost)
+  return replayer.ReadTxs(context.Background(), *endpoint, *dataDir, testnet,
+    cacheDir, *block, *hash, *defrost)
 }
