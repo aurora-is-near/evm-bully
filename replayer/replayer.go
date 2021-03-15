@@ -23,7 +23,10 @@ func traverse(
 	b *types.Block,
 	blockHeight uint64,
 ) ([]common.Hash, error) {
-	var blocks []common.Hash
+	var (
+		blocks  []common.Hash
+		txCount uint64
+	)
 	for blockHeight > 0 {
 		blockHash := b.ParentHash()
 		blockHeight--
@@ -35,12 +38,13 @@ func traverse(
 		log.Info(fmt.Sprintf("read block at height %d with hash %s",
 			blockHeight, blockHash.Hex()))
 		blocks = append(blocks, blockHash)
+		txCount += uint64(len(b.Transactions()))
 	}
 	// reverse blocks
 	for i, j := 0, len(blocks)-1; i < j; i, j = i+1, j-1 {
 		blocks[i], blocks[j] = blocks[j], blocks[i]
 	}
-
+	log.Info(fmt.Sprintf("total number of transactions: %d", txCount))
 	return blocks, nil
 }
 
