@@ -86,27 +86,37 @@ func (a *Account) readAccessKey(filename, receiverID string) error {
 }
 
 // SendMoney sends amount NEAR from account to receiverID.
-func (a *Account) SendMoney(receiverID string, amount *big.Int) error {
-	return a.signAndSendTransaction(receiverID, []interface{}{Transfer{amount}})
+func (a *Account) SendMoney(
+	receiverID string,
+	amount big.Int,
+) (map[string]interface{}, error) {
+	return a.signAndSendTransaction(receiverID, []Action{Action{
+		Enum:     3,
+		Transfer: Transfer{amount},
+	}})
 }
 
-func (a *Account) signAndSendTransaction(receiverID string, actions []interface{}) error {
+func (a *Account) signAndSendTransaction(
+	receiverID string,
+	actions []Action,
+) (map[string]interface{}, error) {
 	// TODO: exponential backoff
 	_, signedTx, err := a.signTransaction(receiverID, actions)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	buf, err := borsh.Serialize(signedTx)
+
+	buf, err := borsh.Serialize(*signedTx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	_, err = a.conn.SendTransaction(buf)
-	return err
+
+	return a.conn.SendTransaction(buf)
 }
 
 func (a *Account) signTransaction(
 	receiverID string,
-	actions []interface{},
+	actions []Action,
 ) (txHash []byte, signedTx *SignedTransaction, err error) {
 	_, ak, err := a.findAccessKey()
 	if err != nil {
@@ -128,7 +138,7 @@ func (a *Account) signTransaction(
 	nonce++
 
 	// sign transaction
-	return signTransaction(receiverID, nonce, actions, base58.Decode(blockHash),
+	return signTransaction(receiverID, uint64(nonce), actions, base58.Decode(blockHash),
 		a.pubKey, a.privKey, a.AccountID)
 
 }

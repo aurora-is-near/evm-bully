@@ -8,13 +8,13 @@ const (
 )
 
 type PublicKey struct {
-	KeyType int
-	Data    []byte
+	KeyType uint8
+	Data    [32]byte
 }
 
-func PublicKeyFromEd25519(pk ed25519.PublicKey) *PublicKey {
+func PublicKeyFromEd25519(pk ed25519.PublicKey) PublicKey {
 	var pubKey PublicKey
 	pubKey.KeyType = ED25519
-	pubKey.Data = pk
-	return &pubKey
+	copy(pubKey.Data[:], pk)
+	return pubKey
 }

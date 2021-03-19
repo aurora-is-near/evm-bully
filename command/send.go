@@ -1,6 +1,7 @@
 package command
 
 import (
+  "encoding/json"
   "flag"
   "fmt"
   "os"
@@ -39,5 +40,14 @@ func Send(argv0 string, args ...string) error {
   if err != nil {
     return err
   }
-  return a.SendMoney(receiver, amnt)
+  res, err := a.SendMoney(receiver, *amnt)
+  if err != nil {
+    return err
+  }
+  jsn, err := json.MarshalIndent(res, "", "  ")
+  if err != nil {
+    return err
+  }
+  fmt.Println(string(jsn))
+  return nil
 }
