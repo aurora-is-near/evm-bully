@@ -91,8 +91,10 @@ func (a *Account) SendMoney(
 	amount big.Int,
 ) (map[string]interface{}, error) {
 	return a.signAndSendTransaction(receiverID, []Action{Action{
-		Enum:     3,
-		Transfer: Transfer{amount},
+		Enum: 3,
+		Transfer: Transfer{
+			Deposit: amount,
+		},
 	}})
 }
 
@@ -152,9 +154,25 @@ func (a *Account) findAccessKey() (publicKey ed25519.PublicKey, accessKey map[st
 	}
 	ak, err := a.conn.ViewAccessKey(a.AccountID, a.PublicKey)
 	if err != nil {
-		fmt.Println("ERROR")
 		return nil, nil, err
 	}
 	a.accessKeyByPublicKeyCache[string(publicKey)] = ak
 	return pk, ak, nil
+}
+
+func (a *Account) FunctionCall(
+	contractID, methodName string,
+	args []byte,
+	gas uint64,
+	amount big.Int,
+) (map[string]interface{}, error) {
+	return a.signAndSendTransaction(contractID, []Action{Action{
+		Enum: 2,
+		FunctionCall: FunctionCall{
+			MethodName: methodName,
+			Args:       args,
+			Gas:        gas,
+			Deposit:    amount,
+		},
+	}})
 }
