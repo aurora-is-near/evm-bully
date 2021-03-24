@@ -64,7 +64,11 @@ func ParseNearAmount(amount string) (string, error) {
 		return "", fmt.Errorf("utils: cannot parse as NEAR amount: %s", amount)
 	}
 	res := wholePart + fracPart + strings.Repeat("0", NearNominationExp-len(fracPart))
-	return strings.TrimLeft(res, "0"), nil
+	res = strings.TrimLeft(res, "0")
+	if res == "" {
+		return "0", nil
+	}
+	return res, nil
 }
 
 // cleanupAmount removes commas from the input amount and returns the result.
