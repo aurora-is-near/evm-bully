@@ -3,6 +3,7 @@ package nearapi
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -136,4 +137,24 @@ func (c *Connection) ViewAccessKey(accountID, publicKey string) (map[string]inte
 		return nil, ErrNotObject
 	}
 	return r, nil
+}
+
+func GetTransactionLastResult(txResult map[string]interface{}) (interface{}, error) {
+	status, ok := txResult["status"].(map[string]interface{})
+	if ok {
+		enc, ok := status["SuccessValue"].(string)
+		if ok {
+			buf, err := base64.URLEncoding.DecodeString(enc)
+			if err != nil {
+				return nil, err
+			}
+			var jsn interface{}
+			if err := json.Unmarshal(buf, &jsn); err != nil {
+				// if we cannot unmarshal as JSON just return the buffer as a string
+				return string(buf), nil
+			}
+			return jsn, nil
+		}
+	}
+	return nil, nil
 }
