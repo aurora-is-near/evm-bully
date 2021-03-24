@@ -40,14 +40,20 @@ func Send(argv0 string, args ...string) error {
   if err != nil {
     return err
   }
-  res, err := a.SendMoney(receiver, *amnt)
+  txResult, err := a.SendMoney(receiver, *amnt)
   if err != nil {
     return err
   }
-  jsn, err := json.MarshalIndent(res, "", "  ")
+  res, err := nearapi.GetTransactionLastResult(txResult)
   if err != nil {
     return err
   }
-  fmt.Println(string(jsn))
+  if res != nil {
+    jsn, err := json.MarshalIndent(res, "", "  ")
+    if err != nil {
+      return err
+    }
+    fmt.Println(string(jsn))
+  }
   return nil
 }

@@ -148,6 +148,9 @@ func GetTransactionLastResult(txResult map[string]interface{}) (interface{}, err
 			if err != nil {
 				return nil, err
 			}
+			if len(buf) == 0 {
+				return nil, nil
+			}
 			var jsn interface{}
 			if err := json.Unmarshal(buf, &jsn); err != nil {
 				// if we cannot unmarshal as JSON just return the buffer as a string
