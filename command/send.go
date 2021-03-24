@@ -30,7 +30,6 @@ func Send(argv0 string, args ...string) error {
   sender := fs.Arg(0)
   receiver := fs.Arg(1)
   amount := fs.Arg(2)
-  fmt.Printf("%s %s %s %s\n", nodeURL, sender, receiver, amount)
   c := nearapi.NewConnection(string(nodeURL))
   a, err := nearapi.LoadAccount(c, sender)
   if err != nil {
@@ -40,6 +39,7 @@ func Send(argv0 string, args ...string) error {
   if err != nil {
     return err
   }
+  fmt.Printf("Sending %s NEAR to %s from %s\n", amount, receiver, sender)
   txResult, err := a.SendMoney(receiver, *amnt)
   if err != nil {
     return err

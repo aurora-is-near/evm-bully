@@ -43,7 +43,7 @@ func Call(argv0 string, args ...string) error {
   }
   nodeURL.registerFlag(fs)
   accountID := fs.String("accountId", "", "Unique identifier for the account that will be used to sign this call")
-  contractArgs := fs.String("args", "{}", "Arguments to the contract call, in JSON format by default (e.g. '{\"param_a\": \"value\"}')")
+  methodArgs := fs.String("args", "{}", "Arguments to the contract call, in JSON format by default (e.g. '{\"param_a\": \"value\"}')")
   base64enc := fs.Bool("base64", false, "Treat arguments as base64-encoded BLOB")
   gas := fs.Uint64("gas", 100000000000000, "Max amount of gas this call can use (in gas units)")
   amount := fs.String("amount", "0", "Number of tokens to attach (in NEAR)")
@@ -68,10 +68,11 @@ func Call(argv0 string, args ...string) error {
   if err != nil {
     return err
   }
-  parsedArgs, err := parseArgs(*contractArgs, *base64enc)
+  parsedArgs, err := parseArgs(*methodArgs, *base64enc)
   if err != nil {
     return err
   }
+  fmt.Printf("Scheduling a call: %s.%s(%s)\n", contract, method, *methodArgs)
   txResult, err := a.FunctionCall(contract, method, parsedArgs, *gas, *amnt)
   if err != nil {
     return err
