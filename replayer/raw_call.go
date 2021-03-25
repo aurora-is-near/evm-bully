@@ -7,6 +7,7 @@ import (
 	"math/big"
 
 	"github.com/aurora-is-near/evm-bully/nearapi"
+	"github.com/aurora-is-near/evm-bully/nearapi/utils"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -32,6 +33,7 @@ func rawCall(
 		if err != nil {
 			return err
 		}
+		utils.PrettyPrintResponse(txResult)
 		status := txResult["status"].(map[string]interface{})
 		jsn, err := json.MarshalIndent(status, "", "  ")
 		if err != nil {

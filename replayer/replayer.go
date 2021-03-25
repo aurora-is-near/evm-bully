@@ -9,7 +9,6 @@ import (
 	"github.com/aurora-is-near/evm-bully/nearapi"
 	"github.com/aurora-is-near/evm-bully/util/hashcache"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -110,6 +109,7 @@ func generateTransactions(
 // blockHash.
 func Replay(
 	ctx context.Context,
+	chainID uint64,
 	a *nearapi.Account,
 	evmContract string,
 	gas uint64,
@@ -171,8 +171,9 @@ func Replay(
 	}
 
 	// process genesis block
-	g := getGenesisBlock(testnet)
-	if err := beginChain(g); err != nil {
+	genesisBlock := getGenesisBlock(testnet)
+	err = beginChain(chainID, a, evmContract, gas, genesisBlock)
+	if err != nil {
 		return err
 	}
 
@@ -182,11 +183,6 @@ func Replay(
 		return err
 	}
 
-	return nil
-}
-
-func beginChain(g *core.Genesis) error {
-	fmt.Println("begin_chain()")
 	return nil
 }
 

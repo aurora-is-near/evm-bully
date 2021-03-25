@@ -21,7 +21,7 @@ func Genesis(argv0 string, args ...string) error {
   if err := fs.Parse(args); err != nil {
     return err
   }
-  testnet, err := f.determineTestnet()
+  _, testnet, err := f.determineTestnet()
   if err != nil {
     return err
   }

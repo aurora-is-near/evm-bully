@@ -41,7 +41,7 @@ func Replay(argv0 string, args ...string) error {
   if *accountID == "" {
     return errors.New("option -accountId is mandatory")
   }
-  testnet, err := testnetFlags.determineTestnet()
+  chainID, testnet, err := testnetFlags.determineTestnet()
   if err != nil {
     return err
   }
@@ -64,6 +64,6 @@ func Replay(argv0 string, args ...string) error {
     return err
   }
   // run replayer
-  return replayer.Replay(context.Background(), a, evmContract, *gas, *endpoint, *dataDir, testnet,
-    cacheDir, *block, *hash, *defrost)
+  return replayer.Replay(context.Background(), chainID, a, evmContract, *gas,
+    *endpoint, *dataDir, testnet, cacheDir, *block, *hash, *defrost)
 }
