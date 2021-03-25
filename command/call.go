@@ -45,7 +45,7 @@ func Call(argv0 string, args ...string) error {
   accountID := fs.String("accountId", "", "Unique identifier for the account that will be used to sign this call")
   methodArgs := fs.String("args", "{}", "Arguments to the contract call, in JSON format by default (e.g. '{\"param_a\": \"value\"}')")
   base64enc := fs.Bool("base64", false, "Treat arguments as base64-encoded BLOB")
-  gas := fs.Uint64("gas", 100000000000000, "Max amount of gas this call can use (in gas units)")
+  gas := fs.Uint64("gas", defaultGas, "Max amount of gas this call can use (in gas units)")
   amount := fs.String("amount", "0", "Number of tokens to attach (in NEAR)")
   if err := fs.Parse(args); err != nil {
     return err

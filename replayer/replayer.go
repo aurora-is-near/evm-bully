@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/aurora-is-near/evm-bully/nearapi"
 	"github.com/aurora-is-near/evm-bully/util/hashcache"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
@@ -52,6 +53,9 @@ func traverse(
 // generateTransactions starting at genesis block.
 func generateTransactions(
 	ctx context.Context,
+	a *nearapi.Account,
+	evmContract string,
+	gas uint64,
 	endpoint string,
 	db ethdb.Database,
 	blocks []common.Hash,
@@ -93,7 +97,8 @@ func generateTransactions(
 				}
 			}
 		*/
-		if err := rawCall(blockHeight, b.Transactions()); err != nil {
+		err = rawCall(a, evmContract, gas, blockHeight, b.Transactions())
+		if err != nil {
 
 		}
 
@@ -105,6 +110,9 @@ func generateTransactions(
 // blockHash.
 func Replay(
 	ctx context.Context,
+	a *nearapi.Account,
+	evmContract string,
+	gas uint64,
 	endpoint, dataDir, testnet, cacheDir string,
 	blockHeight uint64,
 	blockHash string,
@@ -169,7 +177,8 @@ func Replay(
 	}
 
 	// generate transactions starting at genesis block
-	if err := generateTransactions(ctx, endpoint, db, blocks); err != nil {
+	err = generateTransactions(ctx, a, evmContract, gas, endpoint, db, blocks)
+	if err != nil {
 		return err
 	}
 
@@ -183,13 +192,5 @@ func beginChain(g *core.Genesis) error {
 
 func beginBlock(c *blockContext) error {
 	fmt.Printf("begin_block(%d)\n", c.number)
-	return nil
-}
-
-func rawCall(blockHeight int, txs types.Transactions) error {
-	// TODO: batching
-	for i, _ := range txs {
-		fmt.Printf("raw_call(%d, %d)\n", blockHeight, i)
-	}
 	return nil
 }

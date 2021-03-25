@@ -21,7 +21,7 @@ func fatal(err error) {
 func usage() {
 	cmd := os.Args[0] + " [-v]"
 	fmt.Fprintf(os.Stderr, "Usage: %s genesis\n", cmd)
-	fmt.Fprintf(os.Stderr, "       %s replay\n", cmd)
+	fmt.Fprintf(os.Stderr, "       %s replay <evmContract>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s block\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s state <accountId>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s call <contractName> <methodName>\n", cmd)
