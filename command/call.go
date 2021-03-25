@@ -77,7 +77,7 @@ func Call(argv0 string, args ...string) error {
   if err != nil {
     return err
   }
-  prettyPrintResponse(txResult)
+  utils.PrettyPrintResponse(txResult)
   res, err := nearapi.GetTransactionLastResult(txResult)
   if err != nil {
     return err

@@ -139,6 +139,7 @@ func (c *Connection) ViewAccessKey(accountID, publicKey string) (map[string]inte
 	return r, nil
 }
 
+// TODO
 func GetTransactionLastResult(txResult map[string]interface{}) (interface{}, error) {
 	status, ok := txResult["status"].(map[string]interface{})
 	if ok {

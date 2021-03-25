@@ -1,6 +1,8 @@
 package replayer
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -18,17 +20,27 @@ func rawCall(
 	zeroAmount := big.NewInt(0)
 
 	// TODO: batching
-	for i, _ := range txs {
-		fmt.Printf("raw_call(%d, %d)\n", blockHeight, i)
+	for i, tx := range txs {
+		// get signed transaction in RLP encoding
+		rlp, err := tx.MarshalBinary()
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("raw_call(%d, tx=%d, tx_size=%d)\n", blockHeight, i, len(rlp))
+		txResult, err := a.FunctionCall(evmContract, "raw_call", rlp, gas, *zeroAmount)
+		if err != nil {
+			return err
+		}
+		status := txResult["status"].(map[string]interface{})
+		jsn, err := json.MarshalIndent(status, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(jsn))
+		if status["Failure"] != nil {
+			return errors.New("replayer: transaction failed")
+		}
 	}
-
-	// TODO:
-	var args []byte
-
-	_, err := a.FunctionCall(evmContract, "raw_call", args, gas, *zeroAmount)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
