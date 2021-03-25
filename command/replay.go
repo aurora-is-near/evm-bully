@@ -45,6 +45,6 @@ func Replay(argv0 string, args ...string) error {
     return err
   }
   // run replayer
-  return replayer.ReadTxs(context.Background(), *endpoint, *dataDir, testnet,
+  return replayer.Replay(context.Background(), *endpoint, *dataDir, testnet,
     cacheDir, *block, *hash, *defrost)
 }

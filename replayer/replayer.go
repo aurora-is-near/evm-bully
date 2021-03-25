@@ -3,12 +3,12 @@ package replayer
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"path/filepath"
 
 	"github.com/aurora-is-near/evm-bully/util/hashcache"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -76,26 +76,34 @@ func generateTransactions(
 		if err != nil {
 			return err
 		}
-		c.dump()
+		//c.dump()
+		if err := beginBlock(c); err != nil {
+			return err
+		}
 
 		// transactions
-		for i, tx := range b.Transactions() {
-			fmt.Printf("b=%d tx=%d chainid=%s data=%s\n", blockHeight, i,
-				tx.ChainId().String(), hex.EncodeToString(tx.Data()))
+		/*
+			for i, tx := range b.Transactions() {
+				fmt.Printf("b=%d tx=%d chainid=%s data=%s\n", blockHeight, i,
+					tx.ChainId().String(), hex.EncodeToString(tx.Data()))
 
-			// submit transaction to JSON-RPC endpoint ("eth_sendRawTransaction")
-			if err := ec.SendTransaction(ctx, tx); err != nil {
-				return err
+				// submit transaction to JSON-RPC endpoint ("eth_sendRawTransaction")
+				if err := ec.SendTransaction(ctx, tx); err != nil {
+					return err
+				}
 			}
+		*/
+		if err := rawCall(blockHeight, b.Transactions()); err != nil {
+
 		}
 
 	}
 	return nil
 }
 
-// ReadTxs reads transactions from dataDir, starting at block with given
-// blockHeight and blockHash.
-func ReadTxs(
+// Replay transactions from dataDir up block with given blockHeight and
+// blockHash.
+func Replay(
 	ctx context.Context,
 	endpoint, dataDir, testnet, cacheDir string,
 	blockHeight uint64,
@@ -154,10 +162,34 @@ func ReadTxs(
 		blocks = blocks[:blockHeight+1]
 	}
 
+	// process genesis block
+	g := getGenesisBlock(testnet)
+	if err := beginChain(g); err != nil {
+		return err
+	}
+
 	// generate transactions starting at genesis block
 	if err := generateTransactions(ctx, endpoint, db, blocks); err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func beginChain(g *core.Genesis) error {
+	fmt.Println("begin_chain()")
+	return nil
+}
+
+func beginBlock(c *blockContext) error {
+	fmt.Printf("begin_block(%d)\n", c.number)
+	return nil
+}
+
+func rawCall(blockHeight int, txs types.Transactions) error {
+	// TODO: batching
+	for i, _ := range txs {
+		fmt.Printf("raw_call(%d, %d)\n", blockHeight, i)
+	}
 	return nil
 }
