@@ -109,7 +109,7 @@ func generateTransactions(
 // blockHash.
 func Replay(
 	ctx context.Context,
-	chainID uint64,
+	chainID uint8,
 	a *nearapi.Account,
 	evmContract string,
 	gas uint64,

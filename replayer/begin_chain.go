@@ -12,12 +12,14 @@ import (
 	"github.com/near/borsh-go"
 )
 
+type RawU256 [32]uint8
+
 type BeginChainArgs struct {
-	ChainID uint64 // TODO: use correct type for aurora-engine compatibility
+	ChainID RawU256
 }
 
 func beginChain(
-	chainID uint64,
+	chainID uint8,
 	a *nearapi.Account,
 	evmContract string,
 	gas uint64,
@@ -27,9 +29,8 @@ func beginChain(
 
 	fmt.Println("begin_chain()")
 
-	args := BeginChainArgs{
-		ChainID: chainID,
-	}
+	var args BeginChainArgs
+	args.ChainID[0] = chainID
 
 	data, err := borsh.Serialize(args)
 	if err != nil {

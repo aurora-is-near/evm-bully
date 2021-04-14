@@ -23,7 +23,7 @@ func (f *testnetFlags) registerFlags(fs *flag.FlagSet) {
 	fs.BoolVar(&f.ropsten, "ropsten", false, "Use the Ropsten testnet")
 }
 
-func (f *testnetFlags) determineTestnet() (chainID uint64, testnet string, err error) {
+func (f *testnetFlags) determineTestnet() (chainID uint8, testnet string, err error) {
 	if !f.goerli && !f.rinkeby && !f.ropsten {
 		return 0, "", errors.New("one of the options -goerli, -rinkeby, or -ropsten is mandatory")
 	}
