@@ -6,4 +6,4 @@ then
   exit 1
 fi
 
-evm-bully replay -accountId evm.evm-bully.testnet -goerli evm.evm-bully.testnet
+evm-bully -v replay -accountId evm-bully.testnet -goerli evm.evm-bully.testnet
