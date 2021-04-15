@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -138,6 +139,9 @@ func (a *Account) signTransaction(
 		return nil, nil, err
 	}
 	nonce++
+
+	// save nonce
+	ak["nonce"] = json.Number(strconv.FormatInt(nonce, 10))
 
 	// sign transaction
 	return signTransaction(receiverID, uint64(nonce), actions, base58.Decode(blockHash),
