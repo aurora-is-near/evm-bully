@@ -80,7 +80,7 @@ func generateTransactions(
 			return err
 		}
 		//c.dump()
-		if err := beginBlock(c); err != nil {
+		if err := beginBlock(a, evmContract, gas, c); err != nil {
 			return err
 		}
 
@@ -183,10 +183,5 @@ func Replay(
 		return err
 	}
 
-	return nil
-}
-
-func beginBlock(c *blockContext) error {
-	fmt.Printf("begin_block(%d)\n", c.number)
 	return nil
 }

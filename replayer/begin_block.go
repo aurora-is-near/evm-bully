@@ -1,6 +1,7 @@
 package replayer
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,34 +9,42 @@ import (
 
 	"github.com/aurora-is-near/evm-bully/nearapi"
 	"github.com/aurora-is-near/evm-bully/nearapi/utils"
-	"github.com/ethereum/go-ethereum/core"
 	"github.com/near/borsh-go"
 )
 
-type BeginChainArgs struct {
-	ChainID RawU256
+type BeginBlockArgs struct {
+	Hash       RawU256
+	Coinbase   RawU256
+	Timestamp  RawU256
+	Number     RawU256
+	Difficulty RawU256
+	Gaslimit   RawU256
 }
 
-func beginChain(
-	chainID uint8,
+func beginBlock(
 	a *nearapi.Account,
 	evmContract string,
 	gas uint64,
-	g *core.Genesis,
+	c *blockContext,
 ) error {
 	zeroAmount := big.NewInt(0)
 
-	fmt.Println("begin_chain()")
+	fmt.Printf("begin_block(%d)\n", c.number)
 
-	var args BeginChainArgs
-	args.ChainID[0] = chainID
+	var args BeginBlockArgs
+	copy(args.Hash[:], c.hash[:])
+	copy(args.Coinbase[:], c.coinbase[:])
+	binary.LittleEndian.PutUint64(args.Timestamp[:], c.timestamp)
+	binary.LittleEndian.PutUint64(args.Number[:], c.number)
+	binary.LittleEndian.PutUint64(args.Difficulty[:], c.difficulty)
+	binary.LittleEndian.PutUint64(args.Gaslimit[:], c.gaslimit)
 
 	data, err := borsh.Serialize(args)
 	if err != nil {
 		return err
 	}
 
-	txResult, err := a.FunctionCall(evmContract, "begin_chain", data, gas, *zeroAmount)
+	txResult, err := a.FunctionCall(evmContract, "begin_block", data, gas, *zeroAmount)
 	if err != nil {
 		return err
 	}
