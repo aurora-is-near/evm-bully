@@ -80,8 +80,12 @@ func generateTransactions(
 			return err
 		}
 		//c.dump()
-		if err := beginBlock(a, evmContract, gas, c); err != nil {
-			return err
+		if len(b.Transactions()) > 0 {
+			if err := beginBlock(a, evmContract, gas, c); err != nil {
+				return err
+			}
+		} else {
+			fmt.Printf("begin_block() skipped for empty block %d\n", blockHeight)
 		}
 
 		// transactions
