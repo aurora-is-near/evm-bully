@@ -12,11 +12,21 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/aurora-is-near/evm-bully/nearapi/utils"
 	"github.com/btcsuite/btcutil/base58"
 	"github.com/near/borsh-go"
 )
 
 const ed25519Prefix = "ed25519:"
+
+// Default number of retries with different nonce before giving up on a transaction.
+const txNonceRetryNumber = 12
+
+// Default wait until next retry in milli seconds.
+const txNonceRetryWait = 500
+
+// Exponential back off for waiting to retry.
+const txNonceRetryWaitBackoff = 1.5
 
 // Account defines access credentials for a NEAR account.
 type Account struct {
@@ -103,18 +113,21 @@ func (a *Account) signAndSendTransaction(
 	receiverID string,
 	actions []Action,
 ) (map[string]interface{}, error) {
-	// TODO: exponential backoff
-	_, signedTx, err := a.signTransaction(receiverID, actions)
-	if err != nil {
-		return nil, err
-	}
+	return utils.ExponentialBackoff(txNonceRetryWait, txNonceRetryNumber,
+		txNonceRetryWaitBackoff, func() (map[string]interface{}, error) {
+			_, signedTx, err := a.signTransaction(receiverID, actions)
+			if err != nil {
+				return nil, err
+			}
 
-	buf, err := borsh.Serialize(*signedTx)
-	if err != nil {
-		return nil, err
-	}
+			buf, err := borsh.Serialize(*signedTx)
+			if err != nil {
+				return nil, err
+			}
 
-	return a.conn.SendTransaction(buf)
+			return a.conn.SendTransaction(buf)
+		})
+
 }
 
 func (a *Account) signTransaction(
