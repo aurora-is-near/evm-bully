@@ -28,7 +28,7 @@ func beginChain(
 	fmt.Println("begin_chain()")
 
 	var args BeginChainArgs
-	args.ChainID[0] = chainID
+	args.ChainID[31] = chainID
 
 	data, err := borsh.Serialize(args)
 	if err != nil {
