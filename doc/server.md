@@ -1,6 +1,6 @@
 ## Server setup
 
-Instructions for a Ubuntu 20.04 LTS development environment.
+Instructions for a local Ubuntu 20.04 LTS development environment.
 
 ### Some tools
 
@@ -9,16 +9,17 @@ Instructions for a Ubuntu 20.04 LTS development environment.
 ### Set up NEAR node
 
 See
-https://docs.near.org/docs/develop/evm/evm-local-setup\#set-up-near-node
+https://docs.near.org/docs/develop/evm/evm-local-setup#set-up-near-node
 
 ### Set up Node.js
 
     curl -sL https://deb.nodesource.com/setup_15.x -o nodesource_setup.sh
     sudo bash nodesource_setup.sh
     sudo apt install -y nodejs
-
     sudo npm install -g truffle
     sudo npm install -g near-cli
+    sudo npm install -g aurora-is-near/aurora-cli
+
 
 ### Install Go
 
