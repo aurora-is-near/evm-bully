@@ -177,6 +177,7 @@ func (a *Account) findAccessKey() (publicKey ed25519.PublicKey, accessKey map[st
 	return pk, ak, nil
 }
 
+// FunctionCall performs a NEAR function call.
 func (a *Account) FunctionCall(
 	contractID, methodName string,
 	args []byte,

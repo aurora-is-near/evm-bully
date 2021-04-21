@@ -19,17 +19,17 @@ func parseArgs(args string, base64enc bool) ([]byte, error) {
 			return nil, err
 		}
 		return b, nil
-	} else {
-		var obj map[string]interface{}
-		if err := json.Unmarshal([]byte(args), &obj); err != nil {
-			return nil, err
-		}
-		jsn, err := json.Marshal(&obj)
-		if err != nil {
-			return nil, err
-		}
-		return jsn, nil
 	}
+	// else
+	var obj map[string]interface{}
+	if err := json.Unmarshal([]byte(args), &obj); err != nil {
+		return nil, err
+	}
+	jsn, err := json.Marshal(&obj)
+	if err != nil {
+		return nil, err
+	}
+	return jsn, nil
 }
 
 // Call implements the 'call' command.

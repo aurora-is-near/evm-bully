@@ -12,6 +12,7 @@ import (
 	"github.com/near/borsh-go"
 )
 
+// BeginChainArgs encodes the arguments for 'begin_chain'.
 type BeginChainArgs struct {
 	ChainID RawU256
 }

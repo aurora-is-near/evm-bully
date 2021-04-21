@@ -8,6 +8,8 @@ import (
 
 type getResult func() (map[string]interface{}, error)
 
+// ExponentialBackoff implements an exponential backoff strategy for calling
+// function fn.
 func ExponentialBackoff(
 	startWaitTime, retryNumber int,
 	waitBackoff float64,

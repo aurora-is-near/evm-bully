@@ -117,7 +117,7 @@ func (c *Connection) SendTransactionAsync(signedTransaction []byte) (string, err
 	return r, nil
 }
 
-// Returns information about a single access key for given accountID and publicKey.
+// ViewAccessKey returns information about a single access key for given accountID and publicKey.
 // The publicKey must have a signature algorithm prefix (like "ed25519:").
 //
 // For details see
@@ -139,7 +139,8 @@ func (c *Connection) ViewAccessKey(accountID, publicKey string) (map[string]inte
 	return r, nil
 }
 
-// TODO
+// GetTransactionLastResult decodes the last transaction result from a JSON
+// map and tries to deterimine if we have an error condition.
 func GetTransactionLastResult(txResult map[string]interface{}) (interface{}, error) {
 	status, ok := txResult["status"].(map[string]interface{})
 	if ok {

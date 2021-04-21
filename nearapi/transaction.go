@@ -11,6 +11,7 @@ import (
 	"github.com/near/borsh-go"
 )
 
+// A Transaction encodes a NEAR transaction.
 type Transaction struct {
 	SignerID   string
 	PublicKey  utils.PublicKey
@@ -20,6 +21,7 @@ type Transaction struct {
 	Actions    []Action
 }
 
+// Action simulates an enum for Borsh encoding.
 type Action struct {
 	Enum           borsh.Enum `borsh_enum:"true"` // will treat this struct as a complex enum when serializing/deserializing
 	CreateAccount  borsh.Enum
@@ -32,10 +34,12 @@ type Action struct {
 	DeleteAccount  DeleteAccount
 }
 
+// The DeployContract action.
 type DeployContract struct {
 	Code []byte
 }
 
+// The FunctionCall action.
 type FunctionCall struct {
 	MethodName string
 	Args       []byte
@@ -43,34 +47,41 @@ type FunctionCall struct {
 	Deposit    big.Int // u128
 }
 
+// The Transfer action.
 type Transfer struct {
 	Deposit big.Int // u128
 }
 
+// The Stake action.
 type Stake struct {
 	Stake     big.Int // u128
 	PublicKey utils.PublicKey
 }
 
+// The AddKey action.
 type AddKey struct {
 	PublicKey utils.PublicKey
 	// TODO: add
 	// AccessKey *utils.AccessKey
 }
 
+// The DeleteKey action.
 type DeleteKey struct {
 	PublicKey utils.PublicKey
 }
 
+// The DeleteAccount action.
 type DeleteAccount struct {
-	BeneficiaryId string
+	BeneficiaryID string
 }
 
+// A Signature used for signing transaction.
 type Signature struct {
 	KeyType uint8
 	Data    [64]byte
 }
 
+// SignedTransaction encodes signed transactions for NEAR.
 type SignedTransaction struct {
 	Transaction Transaction
 	Signature   Signature

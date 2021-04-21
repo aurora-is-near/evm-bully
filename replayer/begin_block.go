@@ -12,6 +12,7 @@ import (
 	"github.com/near/borsh-go"
 )
 
+// BeginBlockArgs encodes the arguments for 'begin_block'.
 type BeginBlockArgs struct {
 	Hash       RawU256
 	Coinbase   RawU256
