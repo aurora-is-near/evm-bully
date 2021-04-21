@@ -101,7 +101,7 @@ func (a *Account) SendMoney(
 	receiverID string,
 	amount big.Int,
 ) (map[string]interface{}, error) {
-	return a.signAndSendTransaction(receiverID, []Action{Action{
+	return a.signAndSendTransaction(receiverID, []Action{{
 		Enum: 3,
 		Transfer: Transfer{
 			Deposit: amount,
@@ -183,7 +183,7 @@ func (a *Account) FunctionCall(
 	gas uint64,
 	amount big.Int,
 ) (map[string]interface{}, error) {
-	return a.signAndSendTransaction(contractID, []Action{Action{
+	return a.signAndSendTransaction(contractID, []Action{{
 		Enum: 2,
 		FunctionCall: FunctionCall{
 			MethodName: methodName,
