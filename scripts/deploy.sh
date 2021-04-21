@@ -6,6 +6,8 @@ then
   exit 1
 fi
 
-near delete evm.evm-bully.testnet evm-bully.testnet
-near create-account evm.evm-bully.testnet --master-account=evm-bully.testnet --initial-balance=100
-near deploy --account-id=evm.evm-bully.testnet --wasm-file=$1
+ACCOUNT=evm-bully.testnet
+
+near delete evm.$ACCOUNT $ACCOUNT
+near create-account evm.$ACCOUNT --master-account=$ACCOUNT --initial-balance=100
+env NEAR_ENV=testnet aurora install --chain 1313161556 --engine evm.$ACCOUNT --signer evm.$ACCOUNT --owner evm.$ACCOUNT $1
