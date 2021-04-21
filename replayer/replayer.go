@@ -125,7 +125,8 @@ func Replay(
 	dbDir := filepath.Join(dataDir, testnet, "geth", "chaindata")
 
 	log.Info(fmt.Sprintf("opening DB in '%s'", dbDir))
-	db, err := rawdb.NewLevelDBDatabaseWithFreezer(dbDir, 0, 0, filepath.Join(dbDir, "ancient"), "")
+	db, err := rawdb.NewLevelDBDatabaseWithFreezer(dbDir, 0, 0,
+		filepath.Join(dbDir, "ancient"), "", true)
 	if err != nil {
 		return err
 	}
