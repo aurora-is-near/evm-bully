@@ -31,7 +31,7 @@ func Send(argv0 string, args ...string) error {
 	receiver := fs.Arg(1)
 	amount := fs.Arg(2)
 	c := nearapi.NewConnection(string(nodeURL))
-	a, err := nearapi.LoadAccount(c, sender)
+	a, err := nearapi.LoadAccount(c, nearapi.GetConfig(), sender)
 	if err != nil {
 		return err
 	}

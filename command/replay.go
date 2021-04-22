@@ -59,7 +59,7 @@ func Replay(argv0 string, args ...string) error {
 	}
 	// load account
 	c := nearapi.NewConnection(string(nodeURL))
-	a, err := nearapi.LoadAccount(c, *accountID)
+	a, err := nearapi.LoadAccount(c, nearapi.GetConfig(), *accountID)
 	if err != nil {
 		return err
 	}

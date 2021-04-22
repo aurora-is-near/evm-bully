@@ -41,23 +41,22 @@ type Account struct {
 
 // LoadAccount loads the credential for the receiverID account, to be used via
 // connection c, and returns it.
-func LoadAccount(c *Connection, receiverID string) (*Account, error) {
+func LoadAccount(c *Connection, cfg *Config, receiverID string) (*Account, error) {
 	var a Account
 	a.conn = c
-	if err := a.locateAccessKey(receiverID); err != nil {
+	if err := a.locateAccessKey(cfg, receiverID); err != nil {
 		return nil, err
 	}
 	a.accessKeyByPublicKeyCache = make(map[string]map[string]interface{})
 	return &a, nil
 }
 
-func (a *Account) locateAccessKey(receiverID string) error {
+func (a *Account) locateAccessKey(cfg *Config, receiverID string) error {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return err
 	}
-	// TODO: extend this function to allow loading from "local" as well
-	fn := filepath.Join(home, ".near-credentials", "default", receiverID+".json")
+	fn := filepath.Join(home, ".near-credentials", cfg.NetworkID, receiverID+".json")
 	return a.readAccessKey(fn, receiverID)
 }
 

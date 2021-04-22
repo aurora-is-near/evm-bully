@@ -60,7 +60,7 @@ func Call(argv0 string, args ...string) error {
 	contract := fs.Arg(0)
 	method := fs.Arg(1)
 	c := nearapi.NewConnection(string(nodeURL))
-	a, err := nearapi.LoadAccount(c, *accountID)
+	a, err := nearapi.LoadAccount(c, nearapi.GetConfig(), *accountID)
 	if err != nil {
 		return err
 	}
