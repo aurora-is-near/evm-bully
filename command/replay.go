@@ -29,8 +29,6 @@ func Replay(argv0 string, args ...string) error {
 	block := fs.Uint64("block", defaultBlockHeight, "Block height")
 	dataDir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
-	// TODO: remove
-	endpoint := fs.String("endpoint", defaultEndpoint, "Set JSON-RPC endpoint")
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas this call can use (in gas units)")
 	hash := fs.String("hash", defaultBlockhash, "Block hash")
 	nodeURL.registerFlag(fs)
@@ -65,5 +63,5 @@ func Replay(argv0 string, args ...string) error {
 	}
 	// run replayer
 	return replayer.Replay(context.Background(), chainID, a, evmContract, *gas,
-		*endpoint, *dataDir, testnet, cacheDir, *block, *hash, *defrost)
+		*dataDir, testnet, cacheDir, *block, *hash, *defrost)
 }

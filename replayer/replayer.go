@@ -11,10 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/ethereum/go-ethereum/rpc"
 )
 
 // traverse blockchain backwards starting at block b with given blockHeight
@@ -55,17 +53,9 @@ func generateTransactions(
 	a *nearapi.Account,
 	evmContract string,
 	gas uint64,
-	endpoint string,
 	db ethdb.Database,
 	blocks []common.Hash,
 ) error {
-	c, err := rpc.DialContext(ctx, endpoint)
-	if err != nil {
-		return err
-	}
-	ec := ethclient.NewClient(c)
-	defer ec.Close()
-
 	for blockHeight, blockHash := range blocks {
 		// read block from DB
 		b := rawdb.ReadBlock(db, blockHash, uint64(blockHeight))
@@ -89,17 +79,6 @@ func generateTransactions(
 		}
 
 		// transactions
-		/*
-			for i, tx := range b.Transactions() {
-				fmt.Printf("b=%d tx=%d chainid=%s data=%s\n", blockHeight, i,
-					tx.ChainId().String(), hex.EncodeToString(tx.Data()))
-
-				// submit transaction to JSON-RPC endpoint ("eth_sendRawTransaction")
-				if err := ec.SendTransaction(ctx, tx); err != nil {
-					return err
-				}
-			}
-		*/
 		err = rawCall(a, evmContract, gas, blockHeight, b.Transactions())
 		if err != nil {
 			return err
@@ -117,7 +96,7 @@ func Replay(
 	a *nearapi.Account,
 	evmContract string,
 	gas uint64,
-	endpoint, dataDir, testnet, cacheDir string,
+	dataDir, testnet, cacheDir string,
 	blockHeight uint64,
 	blockHash string,
 	defrost bool,
@@ -183,7 +162,7 @@ func Replay(
 	}
 
 	// generate transactions starting at genesis block
-	err = generateTransactions(ctx, a, evmContract, gas, endpoint, db, blocks)
+	err = generateTransactions(ctx, a, evmContract, gas, db, blocks)
 	if err != nil {
 		return err
 	}
