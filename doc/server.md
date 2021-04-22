@@ -16,7 +16,6 @@ https://docs.near.org/docs/develop/evm/evm-local-setup#set-up-near-node
     curl -sL https://deb.nodesource.com/setup_15.x -o nodesource_setup.sh
     sudo bash nodesource_setup.sh
     sudo apt install -y nodejs
-    sudo npm install -g truffle
     sudo npm install -g near-cli
     sudo npm install -g aurora-is-near/aurora-cli
 

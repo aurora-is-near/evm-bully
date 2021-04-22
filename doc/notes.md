@@ -1,11 +1,3 @@
-## Notes
-
-- [ ] 1. Change chain ID of `neard` to that of Ethereum testnet.
-- [x] 2. Sync Ethereum testnet with `geth` (fast sync).
-- [x] 3. Read transactions from DB directly.
-- [ ] 4. Feed them to NEAR node directly via JSON-RPC.
-
-
 ### Ethereum testnet sizes
 
 - goerli: ~13 GB
