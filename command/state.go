@@ -19,7 +19,8 @@ func State(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "View account state.\n")
 		fs.PrintDefaults()
 	}
-	nodeURL.registerFlag(fs)
+	cfg := nearapi.GetConfig()
+	nodeURL.registerFlag(fs, cfg)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}

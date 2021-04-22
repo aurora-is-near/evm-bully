@@ -31,7 +31,8 @@ func Replay(argv0 string, args ...string) error {
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas this call can use (in gas units)")
 	hash := fs.String("hash", defaultBlockhash, "Block hash")
-	nodeURL.registerFlag(fs)
+	cfg := nearapi.GetConfig()
+	nodeURL.registerFlag(fs, cfg)
 	testnetFlags.registerFlags(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -57,7 +58,7 @@ func Replay(argv0 string, args ...string) error {
 	}
 	// load account
 	c := nearapi.NewConnection(string(nodeURL))
-	a, err := nearapi.LoadAccount(c, nearapi.GetConfig(), *accountID)
+	a, err := nearapi.LoadAccount(c, cfg, *accountID)
 	if err != nil {
 		return err
 	}

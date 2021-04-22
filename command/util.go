@@ -3,12 +3,14 @@ package command
 import (
 	"errors"
 	"flag"
+
+	"github.com/aurora-is-near/evm-bully/nearapi"
 )
 
 type nodeURLFlag string
 
-func (n *nodeURLFlag) registerFlag(fs *flag.FlagSet) {
-	fs.StringVar((*string)(n), "nodeUrl", defaultNodeURL, "NEAR node URL")
+func (n *nodeURLFlag) registerFlag(fs *flag.FlagSet, cfg *nearapi.Config) {
+	fs.StringVar((*string)(n), "nodeUrl", cfg.NodeURL, "NEAR node URL")
 }
 
 type testnetFlags struct {

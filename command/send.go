@@ -19,7 +19,8 @@ func Send(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "Send tokens to given receiver.\n")
 		fs.PrintDefaults()
 	}
-	nodeURL.registerFlag(fs)
+	cfg := nearapi.GetConfig()
+	nodeURL.registerFlag(fs, cfg)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -31,7 +32,7 @@ func Send(argv0 string, args ...string) error {
 	receiver := fs.Arg(1)
 	amount := fs.Arg(2)
 	c := nearapi.NewConnection(string(nodeURL))
-	a, err := nearapi.LoadAccount(c, nearapi.GetConfig(), sender)
+	a, err := nearapi.LoadAccount(c, cfg, sender)
 	if err != nil {
 		return err
 	}

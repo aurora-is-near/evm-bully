@@ -18,7 +18,8 @@ func Block(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "Queries network for latest block details.\n")
 		fs.PrintDefaults()
 	}
-	nodeURL.registerFlag(fs)
+	cfg := nearapi.GetConfig()
+	nodeURL.registerFlag(fs, cfg)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
