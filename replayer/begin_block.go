@@ -15,7 +15,7 @@ import (
 // BeginBlockArgs encodes the arguments for 'begin_block'.
 type BeginBlockArgs struct {
 	Hash       RawU256
-	Coinbase   RawU256
+	Coinbase   RawAddress
 	Timestamp  RawU256
 	Number     RawU256
 	Difficulty RawU256
