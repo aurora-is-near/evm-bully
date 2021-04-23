@@ -1,7 +1,6 @@
 package replayer
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -30,11 +29,11 @@ func genesisAlloc(g *core.Genesis) ([]AccountBalance, error) {
 	for address, account := range g.Alloc {
 		var ab AccountBalance
 		copy(ab.Account[:], address[:])
-		b, err := bigIntToUint64(account.Balance)
+		b, err := bigIntToRawU256(account.Balance)
 		if err != nil {
 			return nil, err
 		}
-		binary.LittleEndian.PutUint64(ab.Balance[:], b)
+		ab.Balance = b
 		ga = append(ga, ab)
 	}
 	return ga, nil
