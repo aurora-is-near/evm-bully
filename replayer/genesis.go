@@ -1,6 +1,7 @@
 package replayer
 
 import (
+	"encoding/json"
 	"fmt"
 	"sort"
 
@@ -20,23 +21,27 @@ func getGenesisBlock(net string) *core.Genesis {
 	}
 }
 
-func dumpAccounts(g *core.Genesis) {
+func dumpAccounts(g *core.Genesis) error {
 	var addresses []string
 	accounts := make(map[string]string)
 	for address, account := range g.Alloc {
 		a := address.String()
 		addresses = append(addresses, a)
-		accounts[a] = account.Balance.String()
+		jsn, err := json.MarshalIndent(account, "", "  ")
+		if err != nil {
+			return err
+		}
+		accounts[a] = string(jsn)
 	}
 	sort.Strings(addresses)
 	for _, a := range addresses {
 		fmt.Printf("%s: %s\n", a, accounts[a])
 	}
+	return nil
 }
 
 // ProcGenesisBlock processes the genesis block for the given testnet.
 func ProcGenesisBlock(testnet string) error {
 	g := getGenesisBlock(testnet)
-	dumpAccounts(g)
-	return nil
+	return dumpAccounts(g)
 }
