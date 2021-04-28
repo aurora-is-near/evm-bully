@@ -1,16 +1,13 @@
 package command
 
 import (
-	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/aurora-is-near/evm-bully/nearapi"
 	"github.com/aurora-is-near/evm-bully/replayer"
-	"github.com/frankbraun/codechain/util/homedir"
 )
 
 // Replay implements the 'replay' command.
@@ -50,10 +47,8 @@ func Replay(argv0 string, args ...string) error {
 	}
 	evmContract := fs.Arg(0)
 	// determine cache directory
-	homeDir := homedir.Get("evm-bully")
-	cacheDir := filepath.Join(homeDir, testnet)
-	// make sure cache directory exists
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+	cacheDir, err := determineCacheDir(testnet)
+	if err != nil {
 		return err
 	}
 	// load account
@@ -63,6 +58,6 @@ func Replay(argv0 string, args ...string) error {
 		return err
 	}
 	// run replayer
-	return replayer.Replay(context.Background(), chainID, a, evmContract, *gas,
-		*dataDir, testnet, cacheDir, *block, *hash, *defrost)
+	return replayer.Replay(chainID, a, evmContract, *gas, *dataDir, testnet,
+		cacheDir, *block, *hash, *defrost)
 }

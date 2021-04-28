@@ -2,12 +2,9 @@
 package replayer
 
 import (
-	"context"
 	"fmt"
-	"path/filepath"
 
 	"github.com/aurora-is-near/evm-bully/nearapi"
-	"github.com/aurora-is-near/evm-bully/util/hashcache"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -49,7 +46,6 @@ func traverse(
 
 // generateTransactions starting at genesis block.
 func generateTransactions(
-	ctx context.Context,
 	a *nearapi.Account,
 	evmContract string,
 	gas uint64,
@@ -91,7 +87,6 @@ func generateTransactions(
 // Replay transactions from dataDir up block with given blockHeight and
 // blockHash.
 func Replay(
-	ctx context.Context,
 	chainID uint8,
 	a *nearapi.Account,
 	evmContract string,
@@ -101,58 +96,15 @@ func Replay(
 	blockHash string,
 	defrost bool,
 ) error {
-	dbDir := filepath.Join(dataDir, testnet, "geth", "chaindata")
-
-	log.Info(fmt.Sprintf("opening DB in '%s'", dbDir))
-	db, err := rawdb.NewLevelDBDatabaseWithFreezer(dbDir, 0, 0,
-		filepath.Join(dbDir, "ancient"), "", true)
+	db, blocks, err := openDB(dataDir, testnet, cacheDir, blockHeight,
+		blockHash, defrost)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		log.Info(fmt.Sprintf("closing DB in '%s'", dbDir))
+		log.Info("closing DB")
 		db.Close()
 	}()
-
-	// "defrost" the database first
-	if defrost {
-		rawdb.InitDatabaseFromFreezer(db)
-	}
-
-	// load block hash cache
-	blocks, err := hashcache.Load(cacheDir)
-	if err != nil {
-		return err
-	}
-
-	if blocks == nil || uint64(len(blocks)) < blockHeight+1 || blocks[blockHeight].Hex() != blockHash {
-		log.Info("cache doesn't exist, is too small, or hash mismatch")
-
-		// read starting block
-		b := rawdb.ReadBlock(db, common.HexToHash(blockHash), blockHeight)
-		if b == nil {
-			return fmt.Errorf("cannot read block at height %d with hash %s",
-				blockHeight, blockHash)
-		}
-		log.Info(fmt.Sprintf("read block at height %d with hash %s", blockHeight,
-			blockHash))
-
-		// traverse backwards from there
-		blocks, err = traverse(db, b, blockHeight)
-		if err != nil {
-			return err
-		}
-		blocks = append(blocks, common.HexToHash(blockHash))
-
-		// save block hash cache
-		if err := hashcache.Save(cacheDir, blocks); err != nil {
-			return err
-		}
-	} else {
-		log.Info("block hashes read from cache")
-		// truncate blocks to blockHeight
-		blocks = blocks[:blockHeight+1]
-	}
 
 	// process genesis block
 	genesisBlock := getGenesisBlock(testnet)
@@ -162,7 +114,7 @@ func Replay(
 	}
 
 	// generate transactions starting at genesis block
-	err = generateTransactions(ctx, a, evmContract, gas, db, blocks)
+	err = generateTransactions(a, evmContract, gas, db, blocks)
 	if err != nil {
 		return err
 	}

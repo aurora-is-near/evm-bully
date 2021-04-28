@@ -26,6 +26,7 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "       %s state <accountId>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s call <contractName> <methodName>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s send <sender> <receiver> <amount>\n", cmd)
+	fmt.Fprintf(os.Stderr, "       %s stats\n", cmd)
 	fmt.Fprintf(os.Stderr, "Stress test and benchmark the NEAR EVM.\n")
 	fmt.Fprintf(os.Stderr, "Global flags:\n")
 	flag.PrintDefaults()
@@ -67,6 +68,8 @@ func main() {
 		err = command.Call(argv0, args...)
 	case "send":
 		err = command.Send(argv0, args...)
+	case "stats":
+		err = command.Stats(argv0, args...)
 	default:
 		usage()
 	}
