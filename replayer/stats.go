@@ -1,11 +1,9 @@
 package replayer
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/asm"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethdb"
@@ -18,17 +16,6 @@ func calcStatsForTxs(blockHeight int, txs types.Transactions) (uint64, error) {
 		// only look at contract creating transactions
 		if tx.To() == nil {
 			log.Info(fmt.Sprintf("block=%d, tx=%d", blockHeight, i))
-
-			fmt.Println(hex.EncodeToString(tx.Data()))
-
-			ops, err := asm.Disassemble(tx.Data())
-			if err != nil {
-				return 0, err
-			}
-			for _, op := range ops {
-				fmt.Println(op)
-			}
-
 			contractTxCounter++
 		}
 	}
