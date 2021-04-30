@@ -108,6 +108,19 @@ func (a *Account) SendMoney(
 	}})
 }
 
+// DeleteAccount deletes the account and sends the remaining Ⓝ balance to the
+// account beneficiaryID.
+func (a *Account) DeleteAccount(
+	beneficiaryID string,
+) (map[string]interface{}, error) {
+	return a.signAndSendTransaction(a.AccountID, []Action{{
+		Enum: 7,
+		DeleteAccount: DeleteAccount{
+			BeneficiaryID: beneficiaryID,
+		},
+	}})
+}
+
 func (a *Account) signAndSendTransaction(
 	receiverID string,
 	actions []Action,

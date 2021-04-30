@@ -159,6 +159,12 @@ func GetTransactionLastResult(txResult map[string]interface{}) (interface{}, err
 				return string(buf), nil
 			}
 			return jsn, nil
+		} else if status["Failure"] != nil {
+			jsn, err := json.MarshalIndent(status["Failure"], "", "  ")
+			if err != nil {
+				return nil, err
+			}
+			return nil, fmt.Errorf("failure:\n%s", string(jsn))
 		}
 	}
 	return nil, nil

@@ -24,6 +24,7 @@ func usage() {
 	fmt.Fprintf(os.Stderr, "       %s replay <evmContract>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s block\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s state <accountId>\n", cmd)
+	fmt.Fprintf(os.Stderr, "       %s delete <accountId> <beneficiaryId>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s call <contractName> <methodName>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s send <sender> <receiver> <amount>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s stats\n", cmd)
@@ -64,6 +65,8 @@ func main() {
 		err = command.Block(argv0, args...)
 	case "state":
 		err = command.State(argv0, args...)
+	case "delete":
+		err = command.Delete(argv0, args...)
 	case "call":
 		err = command.Call(argv0, args...)
 	case "send":
