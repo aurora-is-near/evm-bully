@@ -94,6 +94,9 @@ type Replayer struct {
 	BlockHeight uint64
 	BlockHash   string
 	Defrost     bool
+	Skip        bool // skip empty blocks
+	Batch       bool // batch transactions
+	BatchSize   int  // batch size when batching transactions
 }
 
 // Replay transactions with evmContract owned by account a.

@@ -28,6 +28,9 @@ func Replay(argv0 string, args ...string) error {
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas this call can use (in gas units)")
 	hash := fs.String("hash", defaultBlockhash, "Block hash")
+	skip := fs.Bool("skip", false, "Skip empty blocks")
+	batch := fs.Bool("batch", false, "Batch transactions")
+	batchSize := fs.Int("size", 10, "Batch size when batching transactions")
 	cfg := nearapi.GetConfig()
 	nodeURL.registerFlag(fs, cfg)
 	testnetFlags.registerFlags(fs)
@@ -61,6 +64,9 @@ func Replay(argv0 string, args ...string) error {
 		BlockHeight: *block,
 		BlockHash:   *hash,
 		Defrost:     *defrost,
+		Skip:        *skip,
+		Batch:       *batch,
+		BatchSize:   *batchSize,
 	}
 	return r.Replay(a, evmContract)
 }
