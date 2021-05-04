@@ -75,7 +75,7 @@ func generateTransactions(
 		}
 
 		// transactions
-		err = rawCall(a, evmContract, gas, blockHeight, b.Transactions())
+		err = submit(a, evmContract, gas, blockHeight, b.Transactions())
 		if err != nil {
 			return err
 		}

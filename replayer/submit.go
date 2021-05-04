@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-func rawCall(
+func submit(
 	a *nearapi.Account,
 	evmContract string,
 	gas uint64,
@@ -28,8 +28,8 @@ func rawCall(
 			return err
 		}
 
-		fmt.Printf("raw_call(%d, tx=%d, tx_size=%d)\n", blockHeight, i, len(rlp))
-		txResult, err := a.FunctionCall(evmContract, "raw_call", rlp, gas, *zeroAmount)
+		fmt.Printf("submit(%d, tx=%d, tx_size=%d)\n", blockHeight, i, len(rlp))
+		txResult, err := a.FunctionCall(evmContract, "submit", rlp, gas, *zeroAmount)
 		if err != nil {
 			return err
 		}
