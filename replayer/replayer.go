@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/aurora-is-near/evm-bully/nearapi"
 	"github.com/aurora-is-near/evm-bully/nearapi/utils"
@@ -91,8 +92,14 @@ func (r *Replayer) startTxGenerator(
 					c <- &Tx{Error: err}
 					return
 				}
+				amount, err := utils.FormatNearAmount(strconv.FormatUint(r.Gas/uint64(r.BatchSize), 10))
+				if err != nil {
+					c <- &Tx{Error: err}
+					return
+				}
 				c <- &Tx{
-					Comment:    fmt.Sprintf("submit(%d, tx=%d, tx_size=%d)", blockHeight, i, len(rlp)),
+					Comment: fmt.Sprintf("submit(%d, tx=%d, tx_size=%d, gas=%sⓃ)",
+						blockHeight, i, len(rlp), amount),
 					MethodName: "submit",
 					Args:       rlp,
 				}
