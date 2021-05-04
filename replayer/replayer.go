@@ -138,20 +138,53 @@ func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
 	}()
 
 	// process transactions
+	batch := make([]nearapi.Action, 0, r.BatchSize)
 	zeroAmount := big.NewInt(0)
 	c := r.startTxGenerator(a, evmContract, db, blocks)
 	for tx := range c {
 		if tx.Error != nil {
 			return tx.Error
 		}
-		if tx.Comment != "" {
-			fmt.Println(tx.Comment)
-		}
 		if tx.MethodName != "" {
-			txResult, err := a.FunctionCall(evmContract, tx.MethodName, tx.Args, r.Gas, *zeroAmount)
-			if err != nil {
-				return err
+			var (
+				txResult map[string]interface{}
+				err      error
+			)
+			if !r.Batch {
+				// no tx batching
+				if tx.Comment != "" {
+					fmt.Println(tx.Comment)
+				}
+				txResult, err = a.FunctionCall(evmContract, tx.MethodName, tx.Args, r.Gas, *zeroAmount)
+				if err != nil {
+					return err
+				}
+			} else {
+				// batch mode
+				if tx.Comment != "" {
+					fmt.Println("batching: " + tx.Comment)
+				}
+				batch = append(batch, nearapi.Action{
+					Enum: 2,
+					FunctionCall: nearapi.FunctionCall{
+						MethodName: tx.MethodName,
+						Args:       tx.Args,
+						Gas:        r.Gas / uint64(r.BatchSize),
+						Deposit:    *zeroAmount,
+					},
+				})
+				if len(batch) == r.BatchSize {
+					fmt.Println("running batch")
+					txResult, err = a.SignAndSendTransaction(evmContract, batch)
+					if err != nil {
+						return err
+					}
+					batch = batch[:0] // reset
+				} else {
+					continue
+				}
 			}
+
 			utils.PrettyPrintResponse(txResult)
 			status := txResult["status"].(map[string]interface{})
 			jsn, err := json.MarshalIndent(status, "", "  ")
@@ -162,6 +195,27 @@ func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
 			if status["Failure"] != nil {
 				return errors.New("replayer: transaction failed")
 			}
+		} else if tx.Comment != "" {
+			fmt.Println(tx.Comment)
+		}
+	}
+
+	// process last batch, if not empty
+	if len(batch) > 0 {
+		fmt.Println("running last batch")
+		txResult, err := a.SignAndSendTransaction(evmContract, batch)
+		if err != nil {
+			return err
+		}
+		utils.PrettyPrintResponse(txResult)
+		status := txResult["status"].(map[string]interface{})
+		jsn, err := json.MarshalIndent(status, "", "  ")
+		if err != nil {
+			return err
+		}
+		fmt.Println(string(jsn))
+		if status["Failure"] != nil {
+			return errors.New("replayer: transaction failed")
 		}
 	}
 	return nil

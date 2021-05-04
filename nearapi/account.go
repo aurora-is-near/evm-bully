@@ -100,7 +100,7 @@ func (a *Account) SendMoney(
 	receiverID string,
 	amount big.Int,
 ) (map[string]interface{}, error) {
-	return a.signAndSendTransaction(receiverID, []Action{{
+	return a.SignAndSendTransaction(receiverID, []Action{{
 		Enum: 3,
 		Transfer: Transfer{
 			Deposit: amount,
@@ -113,7 +113,7 @@ func (a *Account) SendMoney(
 func (a *Account) DeleteAccount(
 	beneficiaryID string,
 ) (map[string]interface{}, error) {
-	return a.signAndSendTransaction(a.AccountID, []Action{{
+	return a.SignAndSendTransaction(a.AccountID, []Action{{
 		Enum: 7,
 		DeleteAccount: DeleteAccount{
 			BeneficiaryID: beneficiaryID,
@@ -121,7 +121,8 @@ func (a *Account) DeleteAccount(
 	}})
 }
 
-func (a *Account) signAndSendTransaction(
+// SignAndSendTransaction signs the given actions and sends them as a transaction to receiverID.
+func (a *Account) SignAndSendTransaction(
 	receiverID string,
 	actions []Action,
 ) (map[string]interface{}, error) {
@@ -196,7 +197,7 @@ func (a *Account) FunctionCall(
 	gas uint64,
 	amount big.Int,
 ) (map[string]interface{}, error) {
-	return a.signAndSendTransaction(contractID, []Action{{
+	return a.SignAndSendTransaction(contractID, []Action{{
 		Enum: 2,
 		FunctionCall: FunctionCall{
 			MethodName: methodName,
