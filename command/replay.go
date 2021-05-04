@@ -46,11 +46,6 @@ func Replay(argv0 string, args ...string) error {
 		return flag.ErrHelp
 	}
 	evmContract := fs.Arg(0)
-	// determine cache directory
-	cacheDir, err := determineCacheDir(testnet)
-	if err != nil {
-		return err
-	}
 	// load account
 	c := nearapi.NewConnection(string(nodeURL))
 	a, err := nearapi.LoadAccount(c, cfg, *accountID)
@@ -58,6 +53,14 @@ func Replay(argv0 string, args ...string) error {
 		return err
 	}
 	// run replayer
-	return replayer.Replay(chainID, a, evmContract, *gas, *dataDir, testnet,
-		cacheDir, *block, *hash, *defrost)
+	r := replayer.Replayer{
+		ChainID:     chainID,
+		Gas:         *gas,
+		DataDir:     *dataDir,
+		Testnet:     testnet,
+		BlockHeight: *block,
+		BlockHash:   *hash,
+		Defrost:     *defrost,
+	}
+	return r.Replay(a, evmContract)
 }

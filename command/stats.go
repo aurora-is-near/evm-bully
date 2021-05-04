@@ -33,11 +33,6 @@ func Stats(argv0 string, args ...string) error {
 		fs.Usage()
 		return flag.ErrHelp
 	}
-	// determine cache directory
-	cacheDir, err := determineCacheDir(testnet)
-	if err != nil {
-		return err
-	}
 	// calculate statistics
-	return replayer.CalcStats(*dataDir, testnet, cacheDir, *block, *hash, *defrost)
+	return replayer.CalcStats(*dataDir, testnet, *block, *hash, *defrost)
 }

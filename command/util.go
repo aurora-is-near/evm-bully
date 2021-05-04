@@ -3,11 +3,8 @@ package command
 import (
 	"errors"
 	"flag"
-	"os"
-	"path/filepath"
 
 	"github.com/aurora-is-near/evm-bully/nearapi"
-	"github.com/frankbraun/codechain/util/homedir"
 )
 
 type nodeURLFlag string
@@ -48,14 +45,4 @@ func (f *testnetFlags) determineTestnet() (chainID uint8, testnet string, err er
 	}
 	// use Görli as the default
 	return 5, "goerli", nil
-}
-
-func determineCacheDir(testnet string) (string, error) {
-	homeDir := homedir.Get("evm-bully")
-	cacheDir := filepath.Join(homeDir, testnet)
-	// make sure cache directory exists
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		return "", err
-	}
-	return cacheDir, nil
 }

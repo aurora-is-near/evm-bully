@@ -51,11 +51,17 @@ func calcStatsForBlocks(db ethdb.Database, blocks []common.Hash) error {
 
 // CalcStats calculates some statistics for the given testnet and prints them to stdout.
 func CalcStats(
-	dataDir, testnet, cacheDir string,
+	dataDir, testnet string,
 	blockHeight uint64,
 	blockHash string,
 	defrost bool,
 ) error {
+	// determine cache directory
+	cacheDir, err := determineCacheDir(testnet)
+	if err != nil {
+		return err
+	}
+	// open database
 	db, blocks, err := openDB(dataDir, testnet, cacheDir, blockHeight,
 		blockHash, defrost)
 	if err != nil {

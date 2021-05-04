@@ -71,6 +71,7 @@ func generateTransactions(
 				return err
 			}
 		} else {
+			// TODO
 			fmt.Printf("begin_block() skipped for empty block %d\n", blockHeight)
 		}
 
@@ -84,20 +85,28 @@ func generateTransactions(
 	return nil
 }
 
-// Replay transactions from dataDir up block with given blockHeight and
-// blockHash.
-func Replay(
-	chainID uint8,
-	a *nearapi.Account,
-	evmContract string,
-	gas uint64,
-	dataDir, testnet, cacheDir string,
-	blockHeight uint64,
-	blockHash string,
-	defrost bool,
-) error {
-	db, blocks, err := openDB(dataDir, testnet, cacheDir, blockHeight,
-		blockHash, defrost)
+// A Replayer replays transactions.
+type Replayer struct {
+	ChainID     uint8
+	Gas         uint64
+	DataDir     string
+	Testnet     string
+	BlockHeight uint64
+	BlockHash   string
+	Defrost     bool
+}
+
+// Replay transactions with evmContract owned by account a.
+func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
+	// determine cache directory
+	cacheDir, err := determineCacheDir(r.Testnet)
+	if err != nil {
+		return err
+	}
+
+	// open database
+	db, blocks, err := openDB(r.DataDir, r.Testnet, cacheDir, r.BlockHeight,
+		r.BlockHash, r.Defrost)
 	if err != nil {
 		return err
 	}
@@ -107,14 +116,14 @@ func Replay(
 	}()
 
 	// process genesis block
-	genesisBlock := getGenesisBlock(testnet)
-	err = beginChain(chainID, a, evmContract, gas, genesisBlock)
+	genesisBlock := getGenesisBlock(r.Testnet)
+	err = beginChain(r.ChainID, a, evmContract, r.Gas, genesisBlock)
 	if err != nil {
 		return err
 	}
 
 	// generate transactions starting at genesis block
-	err = generateTransactions(a, evmContract, gas, db, blocks)
+	err = generateTransactions(a, evmContract, r.Gas, db, blocks)
 	if err != nil {
 		return err
 	}

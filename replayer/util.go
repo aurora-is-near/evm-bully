@@ -3,6 +3,10 @@ package replayer
 import (
 	"fmt"
 	"math/big"
+	"os"
+	"path/filepath"
+
+	"github.com/frankbraun/codechain/util/homedir"
 )
 
 // bigIntToUint64 converts a big integer b to a uint64, if possible.
@@ -30,4 +34,14 @@ func bigIntToRawU256(b *big.Int) (RawU256, error) {
 	}
 	copy(res[:], bytes[:])
 	return res, nil
+}
+
+func determineCacheDir(testnet string) (string, error) {
+	homeDir := homedir.Get("evm-bully")
+	cacheDir := filepath.Join(homeDir, testnet)
+	// make sure cache directory exists
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return "", err
+	}
+	return cacheDir, nil
 }
