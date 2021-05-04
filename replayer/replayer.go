@@ -181,19 +181,11 @@ func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
 					}
 					batch = batch[:0] // reset
 				} else {
-					continue
+					continue // batch no full yet
 				}
 			}
-
-			utils.PrettyPrintResponse(txResult)
-			status := txResult["status"].(map[string]interface{})
-			jsn, err := json.MarshalIndent(status, "", "  ")
-			if err != nil {
+			if err := procTxResult(txResult); err != nil {
 				return err
-			}
-			fmt.Println(string(jsn))
-			if status["Failure"] != nil {
-				return errors.New("replayer: transaction failed")
 			}
 		} else if tx.Comment != "" {
 			fmt.Println(tx.Comment)
@@ -207,16 +199,23 @@ func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
 		if err != nil {
 			return err
 		}
-		utils.PrettyPrintResponse(txResult)
-		status := txResult["status"].(map[string]interface{})
-		jsn, err := json.MarshalIndent(status, "", "  ")
-		if err != nil {
+		if err := procTxResult(txResult); err != nil {
 			return err
 		}
-		fmt.Println(string(jsn))
-		if status["Failure"] != nil {
-			return errors.New("replayer: transaction failed")
-		}
+	}
+	return nil
+}
+
+func procTxResult(txResult map[string]interface{}) error {
+	utils.PrettyPrintResponse(txResult)
+	status := txResult["status"].(map[string]interface{})
+	jsn, err := json.MarshalIndent(status, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(jsn))
+	if status["Failure"] != nil {
+		return errors.New("replayer: transaction failed")
 	}
 	return nil
 }
