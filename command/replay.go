@@ -26,7 +26,7 @@ func Replay(argv0 string, args ...string) error {
 	block := fs.Uint64("block", defaultBlockHeight, "Block height")
 	dataDir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
-	gas := fs.Uint64("gas", defaultGas, "Max amount of gas this call can use (in gas units)")
+	gas := fs.Uint64("gas", defaultGas, "Max amount of gas a call can use (in gas units)")
 	hash := fs.String("hash", defaultBlockhash, "Block hash")
 	skip := fs.Bool("skip", false, "Skip empty blocks")
 	batch := fs.Bool("batch", false, "Batch transactions")

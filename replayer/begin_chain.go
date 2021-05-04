@@ -1,13 +1,9 @@
 package replayer
 
 import (
-	"encoding/json"
-	"errors"
 	"fmt"
-	"math/big"
 
 	"github.com/aurora-is-near/evm-bully/nearapi"
-	"github.com/aurora-is-near/evm-bully/nearapi/utils"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/near/borsh-go"
 )
@@ -39,42 +35,25 @@ func genesisAlloc(g *core.Genesis) ([]AccountBalance, error) {
 	return ga, nil
 }
 
-func (r *Replayer) beginChain(
+func (r *Replayer) beginChainTx(
 	a *nearapi.Account,
 	evmContract string,
 	g *core.Genesis,
-) error {
-	zeroAmount := big.NewInt(0)
-
-	fmt.Println("begin_chain()")
-
+) *Tx {
 	var args BeginChainArgs
 	var err error
 	args.ChainID[31] = r.ChainID
 	args.GenesisAlloc, err = genesisAlloc(g)
 	if err != nil {
-		return err
+		return &Tx{Error: err}
 	}
-
 	data, err := borsh.Serialize(args)
 	if err != nil {
-		return err
+		return &Tx{Error: err}
 	}
-
-	txResult, err := a.FunctionCall(evmContract, "begin_chain", data, r.Gas, *zeroAmount)
-	if err != nil {
-		return err
+	return &Tx{
+		Comment:    fmt.Sprintf("begin_chain()"),
+		MethodName: "begin_chain",
+		Args:       data,
 	}
-	utils.PrettyPrintResponse(txResult)
-	status := txResult["status"].(map[string]interface{})
-	jsn, err := json.MarshalIndent(status, "", "  ")
-	if err != nil {
-		return err
-	}
-	fmt.Println(string(jsn))
-	if status["Failure"] != nil {
-		return errors.New("replayer: transaction failed")
-	}
-
-	return nil
 }

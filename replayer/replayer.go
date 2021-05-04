@@ -2,9 +2,13 @@
 package replayer
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"math/big"
 
 	"github.com/aurora-is-near/evm-bully/nearapi"
+	"github.com/aurora-is-near/evm-bully/nearapi/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -44,51 +48,60 @@ func traverse(
 	return blocks, nil
 }
 
-// generateTransactions starting at genesis block.
-func (r *Replayer) generateTransactions(
+// startGenerator starts a goroutine that feeds transactions into the returned tx channel.
+func (r *Replayer) startTxGenerator(
 	a *nearapi.Account,
 	evmContract string,
 	db ethdb.Database,
 	blocks []common.Hash,
-) error {
-	// process genesis block
-	genesisBlock := getGenesisBlock(r.Testnet)
-	err := r.beginChain(a, evmContract, genesisBlock)
-	if err != nil {
-		return err
-	}
+) chan *Tx {
+	c := make(chan *Tx, 10*r.BatchSize)
 
-	for blockHeight, blockHash := range blocks {
-		// read block from DB
-		b := rawdb.ReadBlock(db, blockHash, uint64(blockHeight))
-		if b == nil {
-			return fmt.Errorf("cannot read block at height %d with hash %s",
-				blockHeight, blockHash.Hex())
-		}
+	go func() {
+		// process genesis block
+		genesisBlock := getGenesisBlock(r.Testnet)
+		c <- r.beginChainTx(a, evmContract, genesisBlock)
 
-		// block context
-		c, err := getBlockContext(b)
-		if err != nil {
-			return err
-		}
-		//c.dump()
-		if len(b.Transactions()) > 0 {
-			if err := beginBlock(a, evmContract, r.Gas, c); err != nil {
-				return err
+		for blockHeight, blockHash := range blocks {
+			// read block from DB
+			b := rawdb.ReadBlock(db, blockHash, uint64(blockHeight))
+			if b == nil {
+				c <- &Tx{Error: fmt.Errorf("cannot read block at height %d with hash %s",
+					blockHeight, blockHash.Hex())}
+				return
 			}
-		} else {
-			// TODO
-			fmt.Printf("begin_block() skipped for empty block %d\n", blockHeight)
-		}
 
-		// transactions
-		err = submit(a, evmContract, r.Gas, blockHeight, b.Transactions())
-		if err != nil {
-			return err
-		}
+			// block context
+			ctx, err := getBlockContext(b)
+			if err != nil {
+				c <- &Tx{Error: err}
+				return
+			}
+			if !r.Skip || len(b.Transactions()) > 0 {
+				c <- beginBlockTx(a, evmContract, r.Gas, ctx)
+			} else {
+				c <- &Tx{Comment: fmt.Sprintf("begin_block() skipped for empty block %d", blockHeight)}
+			}
 
-	}
-	return nil
+			// actual transactions
+			for i, tx := range b.Transactions() {
+				// get signed transaction in RLP encoding
+				rlp, err := tx.MarshalBinary()
+				if err != nil {
+					c <- &Tx{Error: err}
+					return
+				}
+				c <- &Tx{
+					Comment:    fmt.Sprintf("submit(%d, tx=%d, tx_size=%d)", blockHeight, i, len(rlp)),
+					MethodName: "submit",
+					Args:       rlp,
+				}
+			}
+		}
+		close(c)
+	}()
+
+	return c
 }
 
 // A Replayer replays transactions.
@@ -124,11 +137,32 @@ func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
 		db.Close()
 	}()
 
-	// generate transactions starting at genesis block
-	err = r.generateTransactions(a, evmContract, db, blocks)
-	if err != nil {
-		return err
+	// process transactions
+	zeroAmount := big.NewInt(0)
+	c := r.startTxGenerator(a, evmContract, db, blocks)
+	for tx := range c {
+		if tx.Error != nil {
+			return tx.Error
+		}
+		if tx.Comment != "" {
+			fmt.Println(tx.Comment)
+		}
+		if tx.MethodName != "" {
+			txResult, err := a.FunctionCall(evmContract, tx.MethodName, tx.Args, r.Gas, *zeroAmount)
+			if err != nil {
+				return err
+			}
+			utils.PrettyPrintResponse(txResult)
+			status := txResult["status"].(map[string]interface{})
+			jsn, err := json.MarshalIndent(status, "", "  ")
+			if err != nil {
+				return err
+			}
+			fmt.Println(string(jsn))
+			if status["Failure"] != nil {
+				return errors.New("replayer: transaction failed")
+			}
+		}
 	}
-
 	return nil
 }
