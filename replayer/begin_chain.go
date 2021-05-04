@@ -39,11 +39,9 @@ func genesisAlloc(g *core.Genesis) ([]AccountBalance, error) {
 	return ga, nil
 }
 
-func beginChain(
-	chainID uint8,
+func (r *Replayer) beginChain(
 	a *nearapi.Account,
 	evmContract string,
-	gas uint64,
 	g *core.Genesis,
 ) error {
 	zeroAmount := big.NewInt(0)
@@ -52,7 +50,7 @@ func beginChain(
 
 	var args BeginChainArgs
 	var err error
-	args.ChainID[31] = chainID
+	args.ChainID[31] = r.ChainID
 	args.GenesisAlloc, err = genesisAlloc(g)
 	if err != nil {
 		return err
@@ -63,7 +61,7 @@ func beginChain(
 		return err
 	}
 
-	txResult, err := a.FunctionCall(evmContract, "begin_chain", data, gas, *zeroAmount)
+	txResult, err := a.FunctionCall(evmContract, "begin_chain", data, r.Gas, *zeroAmount)
 	if err != nil {
 		return err
 	}

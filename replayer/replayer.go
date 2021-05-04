@@ -45,13 +45,19 @@ func traverse(
 }
 
 // generateTransactions starting at genesis block.
-func generateTransactions(
+func (r *Replayer) generateTransactions(
 	a *nearapi.Account,
 	evmContract string,
-	gas uint64,
 	db ethdb.Database,
 	blocks []common.Hash,
 ) error {
+	// process genesis block
+	genesisBlock := getGenesisBlock(r.Testnet)
+	err := r.beginChain(a, evmContract, genesisBlock)
+	if err != nil {
+		return err
+	}
+
 	for blockHeight, blockHash := range blocks {
 		// read block from DB
 		b := rawdb.ReadBlock(db, blockHash, uint64(blockHeight))
@@ -67,7 +73,7 @@ func generateTransactions(
 		}
 		//c.dump()
 		if len(b.Transactions()) > 0 {
-			if err := beginBlock(a, evmContract, gas, c); err != nil {
+			if err := beginBlock(a, evmContract, r.Gas, c); err != nil {
 				return err
 			}
 		} else {
@@ -76,7 +82,7 @@ func generateTransactions(
 		}
 
 		// transactions
-		err = submit(a, evmContract, gas, blockHeight, b.Transactions())
+		err = submit(a, evmContract, r.Gas, blockHeight, b.Transactions())
 		if err != nil {
 			return err
 		}
@@ -118,15 +124,8 @@ func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
 		db.Close()
 	}()
 
-	// process genesis block
-	genesisBlock := getGenesisBlock(r.Testnet)
-	err = beginChain(r.ChainID, a, evmContract, r.Gas, genesisBlock)
-	if err != nil {
-		return err
-	}
-
 	// generate transactions starting at genesis block
-	err = generateTransactions(a, evmContract, r.Gas, db, blocks)
+	err = r.generateTransactions(a, evmContract, db, blocks)
 	if err != nil {
 		return err
 	}
