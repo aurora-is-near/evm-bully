@@ -2,6 +2,7 @@
 package replayer
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -102,6 +103,7 @@ func (r *Replayer) startTxGenerator(
 						blockHeight, i, len(rlp), amount),
 					MethodName: "submit",
 					Args:       rlp,
+					EthTx:      tx,
 				}
 			}
 		}
@@ -191,7 +193,7 @@ func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
 					continue // batch no full yet
 				}
 			}
-			if err := procTxResult(txResult); err != nil {
+			if err := procTxResult(r.Batch, tx.EthTx, txResult); err != nil {
 				return err
 			}
 		} else if tx.Comment != "" {
@@ -206,14 +208,32 @@ func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
 		if err != nil {
 			return err
 		}
-		if err := procTxResult(txResult); err != nil {
+		if err := procTxResult(r.Batch, nil, txResult); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func procTxResult(txResult map[string]interface{}) error {
+func showTx(tx *types.Transaction) {
+	rlp, err := tx.MarshalBinary()
+	if err != nil {
+		panic(err) // marshalled before
+	}
+	fmt.Println("transaction:")
+	fmt.Println("0x" + hex.EncodeToString(rlp))
+	fmt.Printf("nonce: %d\n", tx.Nonce())
+	fmt.Printf("gasPrice: %s\n", tx.GasPrice().String())
+	fmt.Printf("gasLimit: %d\n", tx.Gas())
+	fmt.Printf("to: 0x%s\n", hex.EncodeToString(tx.To()[:]))
+	fmt.Printf("value: %s\n", tx.Value().String())
+	if len(tx.Data()) > 0 {
+		fmt.Println("data:")
+		fmt.Println("0x" + hex.EncodeToString(tx.Data()))
+	}
+}
+
+func procTxResult(batch bool, tx *types.Transaction, txResult map[string]interface{}) error {
 	utils.PrettyPrintResponse(txResult)
 	status := txResult["status"].(map[string]interface{})
 	jsn, err := json.MarshalIndent(status, "", "  ")
@@ -222,6 +242,10 @@ func procTxResult(txResult map[string]interface{}) error {
 	}
 	fmt.Println(string(jsn))
 	if status["Failure"] != nil {
+		if !batch && tx != nil {
+			// print last failing transaction if possible
+			showTx(tx)
+		}
 		return errors.New("replayer: transaction failed")
 	}
 	return nil
