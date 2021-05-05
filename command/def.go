@@ -1,3 +1,3 @@
 package command
 
-const defaultGas = 300000000000000
+const defaultGas = 800000000000000

@@ -14,4 +14,4 @@ export NEAR_ENV=local
 near create-account $EVM.$ACCOUNT --master-account=$ACCOUNT --initial-balance=1000 --keyPath=$HOME/.near/local/validator_key.json
 aurora install --chain 1313161556 --engine $EVM.$ACCOUNT --signer $EVM.$ACCOUNT --owner $EVM.$ACCOUNT $1
 
-evm-bully -v replay -accountId $EVM.$ACCOUNT -goerli -batch -size 4 -skip $EVM.$ACCOUNT
+evm-bully -v replay -accountId $EVM.$ACCOUNT -goerli -skip $EVM.$ACCOUNT
