@@ -32,6 +32,7 @@ func Replay(argv0 string, args ...string) error {
 	hash := fs.String("hash", defaultBlockhash, "Block hash")
 	skip := fs.Bool("skip", false, "Skip empty blocks")
 	startBlock := fs.Int("startblock", 0, "Start replaying at this block height")
+	timeout := fs.Duration("timeout", 0, "Timeout for JSON-RPC client")
 	cfg := nearapi.GetConfig()
 	nodeURL.registerFlag(fs, cfg)
 	testnetFlags.registerFlags(fs)
@@ -51,7 +52,7 @@ func Replay(argv0 string, args ...string) error {
 	}
 	evmContract := fs.Arg(0)
 	// load account
-	c := nearapi.NewConnection(string(nodeURL))
+	c := nearapi.NewConnectionWithTimeout(string(nodeURL), *timeout)
 	a, err := nearapi.LoadAccount(c, cfg, *accountID)
 	if err != nil {
 		return err

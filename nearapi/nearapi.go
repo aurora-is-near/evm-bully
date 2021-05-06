@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/ybbus/jsonrpc/v2"
@@ -18,8 +19,18 @@ type Connection struct {
 // NewConnection returns a new connection for JSON-RPC calls to the NEAR
 // endpoint with the given nodeURL.
 func NewConnection(nodeURL string) *Connection {
+	return NewConnectionWithTimeout(nodeURL, 0)
+}
+
+// NewConnectionWithTimeout returns a new connection for JSON-RPC calls to the NEAR
+// endpoint with the given nodeURL with the given timeout.
+func NewConnectionWithTimeout(nodeURL string, timeout time.Duration) *Connection {
 	var c Connection
-	c.c = jsonrpc.NewClient(nodeURL)
+	c.c = jsonrpc.NewClientWithOpts(nodeURL, &jsonrpc.RPCClientOpts{
+		HTTPClient: &http.Client{
+			Timeout: timeout,
+		},
+	})
 	return &c
 }
 
