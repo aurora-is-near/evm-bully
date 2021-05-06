@@ -6,14 +6,15 @@ import (
 	"time"
 )
 
-type getResult func() (map[string]interface{}, error)
+// GetResult is the function type used for ExonentialBackoff.
+type GetResult func() (map[string]interface{}, error)
 
 // ExponentialBackoff implements an exponential backoff strategy for calling
 // function fn.
 func ExponentialBackoff(
 	startWaitTime, retryNumber int,
 	waitBackoff float64,
-	fn getResult,
+	fn GetResult,
 ) (map[string]interface{}, error) {
 	waitTime := startWaitTime
 	for i := 0; i < retryNumber; i++ {
