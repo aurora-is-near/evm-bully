@@ -126,8 +126,8 @@ func (a *Account) SignAndSendTransaction(
 	receiverID string,
 	actions []Action,
 ) (map[string]interface{}, error) {
-	return utils.ExponentialBackoff(txNonceRetryWait, txNonceRetryNumber,
-		txNonceRetryWaitBackoff, func() (map[string]interface{}, error) {
+	return utils.ExponentialBackoff(txNonceRetryWait, txNonceRetryNumber, txNonceRetryWaitBackoff,
+		func() (map[string]interface{}, error) {
 			_, signedTx, err := a.signTransaction(receiverID, actions)
 			if err != nil {
 				return nil, err
@@ -140,7 +140,6 @@ func (a *Account) SignAndSendTransaction(
 
 			return a.conn.SendTransaction(buf)
 		})
-
 }
 
 func (a *Account) signTransaction(
