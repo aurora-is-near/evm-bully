@@ -4,8 +4,8 @@ package nearapi
 import (
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"time"
 
 	"github.com/ybbus/jsonrpc/v2"
 )
@@ -26,20 +26,21 @@ func NewConnection(nodeURL string) *Connection {
 // call uses the connection c to call the given method with params.
 // It handles all possible error cases and returns the result (which cannot be nil).
 func (c *Connection) call(method string, params ...interface{}) (interface{}, error) {
+	start := time.Now()
 	res, err := c.c.Call(method, params...)
 	if err != nil {
 		return nil, err
 	}
 	if res.Error != nil {
 		if res.Error.Data != nil {
-			return nil, fmt.Errorf("nearapi: jsonrpc: %d: %s: %v",
-				res.Error.Code, res.Error.Message, res.Error.Data)
+			return nil, fmt.Errorf("nearapi: jsonrpc: %d: %s: %v (after %s)",
+				res.Error.Code, res.Error.Message, res.Error.Data, time.Since(start))
 		}
-		return nil, fmt.Errorf("nearapi: jsonrpc: %d: %s",
-			res.Error.Code, res.Error.Message)
+		return nil, fmt.Errorf("nearapi: jsonrpc: %d: %s (after %s)",
+			res.Error.Code, res.Error.Message, time.Since(start))
 	}
 	if res.Result == nil {
-		return nil, errors.New("nearapi: JSON-RPC result is nil")
+		return nil, fmt.Errorf("nearapi: JSON-RPC result is nil (after %s)", time.Since(start))
 	}
 	return res.Result, nil
 }
