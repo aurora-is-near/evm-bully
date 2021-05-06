@@ -65,6 +65,10 @@ func (r *Replayer) startTxGenerator(
 		c <- r.beginChainTx(a, evmContract, genesisBlock)
 
 		for blockHeight, blockHash := range blocks {
+			if blockHeight < r.StartBlock {
+				c <- &Tx{Comment: fmt.Sprintf("skipping block %d", blockHeight)}
+				continue
+			}
 			// read block from DB
 			b := rawdb.ReadBlock(db, blockHash, uint64(blockHeight))
 			if b == nil {
@@ -125,6 +129,7 @@ type Replayer struct {
 	Skip        bool // skip empty blocks
 	Batch       bool // batch transactions
 	BatchSize   int  // batch size when batching transactions
+	StartBlock  int  // start replaying at this block height
 }
 
 // Replay transactions with evmContract owned by account a.

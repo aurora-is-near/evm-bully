@@ -23,14 +23,15 @@ func Replay(argv0 string, args ...string) error {
 		fs.PrintDefaults()
 	}
 	accountID := fs.String("accountId", "", "Unique identifier for the account that will be used to sign this call")
+	batch := fs.Bool("batch", false, "Batch transactions")
+	batchSize := fs.Int("size", 10, "Batch size when batching transactions")
 	block := fs.Uint64("block", defaultBlockHeight, "Block height")
 	dataDir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas a call can use (in gas units)")
 	hash := fs.String("hash", defaultBlockhash, "Block hash")
 	skip := fs.Bool("skip", false, "Skip empty blocks")
-	batch := fs.Bool("batch", false, "Batch transactions")
-	batchSize := fs.Int("size", 10, "Batch size when batching transactions")
+	startBlock := fs.Int("startblock", 0, "Start replaying at this block height")
 	cfg := nearapi.GetConfig()
 	nodeURL.registerFlag(fs, cfg)
 	testnetFlags.registerFlags(fs)
@@ -67,6 +68,7 @@ func Replay(argv0 string, args ...string) error {
 		Skip:        *skip,
 		Batch:       *batch,
 		BatchSize:   *batchSize,
+		StartBlock:  *startBlock,
 	}
 	return r.Replay(a, evmContract)
 }
