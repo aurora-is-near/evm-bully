@@ -3,6 +3,7 @@ package command
 import (
 	"errors"
 	"flag"
+	"fmt"
 
 	"github.com/aurora-is-near/evm-bully/nearapi"
 )
@@ -45,4 +46,24 @@ func (f *testnetFlags) determineTestnet() (chainID uint8, testnet string, err er
 	}
 	// use Görli as the default
 	return 5, "goerli", nil
+}
+
+func adjustBlockDefaults(block *uint64, hash *string, testnet string) {
+	switch testnet {
+	case "rinkeby":
+		if *block == defaultGoerliBlockHeight && *hash == defaultGoerliBlockHash {
+			fmt.Printf("changing -block value to %d\n", defaultRinkebyBlockHeight)
+			*block = defaultRinkebyBlockHeight
+			fmt.Printf("changing -hash value to %s\n", defaultRinkebyBlockHash)
+			*hash = defaultRinkebyBlockHash
+		}
+	case "ropsten":
+		if *block == defaultGoerliBlockHeight && *hash == defaultGoerliBlockHash {
+			fmt.Printf("changing -block value to %d\n", defaultRopstenBlockHeight)
+			*block = defaultRopstenBlockHeight
+			fmt.Printf("changing -hash value to %s\n", defaultRopstenBlockHash)
+			*hash = defaultRopstenBlockHash
+		}
+
+	}
 }

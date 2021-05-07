@@ -25,11 +25,11 @@ func Replay(argv0 string, args ...string) error {
 	accountID := fs.String("accountId", "", "Unique identifier for the account that will be used to sign this call")
 	batch := fs.Bool("batch", false, "Batch transactions")
 	batchSize := fs.Int("size", 10, "Batch size when batching transactions")
-	block := fs.Uint64("block", defaultBlockHeight, "Block height")
+	block := fs.Uint64("block", defaultGoerliBlockHeight, "Block height")
 	dataDir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas a call can use (in gas units)")
-	hash := fs.String("hash", defaultBlockhash, "Block hash")
+	hash := fs.String("hash", defaultGoerliBlockHash, "Block hash")
 	skip := fs.Bool("skip", false, "Skip empty blocks")
 	startBlock := fs.Int("startblock", 0, "Start replaying at this block height")
 	timeout := fs.Duration("timeout", 0, "Timeout for JSON-RPC client")
@@ -46,6 +46,7 @@ func Replay(argv0 string, args ...string) error {
 	if err != nil {
 		return err
 	}
+	adjustBlockDefaults(block, hash, testnet)
 	if fs.NArg() != 1 {
 		fs.Usage()
 		return flag.ErrHelp

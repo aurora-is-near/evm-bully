@@ -17,10 +17,10 @@ func Stats(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "Calculate testnet statistics.\n")
 		fs.PrintDefaults()
 	}
-	block := fs.Uint64("block", defaultBlockHeight, "Block height")
+	block := fs.Uint64("block", defaultGoerliBlockHeight, "Block height")
 	dataDir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
-	hash := fs.String("hash", defaultBlockhash, "Block hash")
+	hash := fs.String("hash", defaultGoerliBlockHash, "Block hash")
 	f.registerFlags(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -29,6 +29,7 @@ func Stats(argv0 string, args ...string) error {
 	if err != nil {
 		return err
 	}
+	adjustBlockDefaults(block, hash, testnet)
 	if fs.NArg() != 0 {
 		fs.Usage()
 		return flag.ErrHelp
