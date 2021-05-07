@@ -230,7 +230,11 @@ func showTx(tx *types.Transaction) {
 	fmt.Printf("nonce: %d\n", tx.Nonce())
 	fmt.Printf("gasPrice: %s\n", tx.GasPrice().String())
 	fmt.Printf("gasLimit: %d\n", tx.Gas())
-	fmt.Printf("to: 0x%s\n", hex.EncodeToString(tx.To()[:]))
+	if tx.To() != nil {
+		fmt.Printf("to: 0x%s\n", hex.EncodeToString(tx.To()[:]))
+	} else {
+		fmt.Println("to: contract creation")
+	}
 	fmt.Printf("value: %s\n", tx.Value().String())
 	if len(tx.Data()) > 0 {
 		fmt.Println("data:")
