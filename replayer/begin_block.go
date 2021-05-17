@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/aurora-is-near/evm-bully/nearapi"
+	"github.com/aurora-is-near/near-api-go"
 	"github.com/near/borsh-go"
 )
 
@@ -19,7 +19,7 @@ type BeginBlockArgs struct {
 }
 
 func beginBlockTx(
-	a *nearapi.Account,
+	a *near.Account,
 	evmContract string,
 	gas uint64,
 	c *blockContext,

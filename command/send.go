@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aurora-is-near/evm-bully/nearapi"
-	"github.com/aurora-is-near/evm-bully/nearapi/utils"
+	"github.com/aurora-is-near/near-api-go"
+	"github.com/aurora-is-near/near-api-go/utils"
 )
 
 // Send implements the 'send' command.
@@ -19,7 +19,7 @@ func Send(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "Send tokens to given receiver.\n")
 		fs.PrintDefaults()
 	}
-	cfg := nearapi.GetConfig()
+	cfg := near.GetConfig()
 	nodeURL.registerFlag(fs, cfg)
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -31,8 +31,8 @@ func Send(argv0 string, args ...string) error {
 	sender := fs.Arg(0)
 	receiver := fs.Arg(1)
 	amount := fs.Arg(2)
-	c := nearapi.NewConnection(string(nodeURL))
-	a, err := nearapi.LoadAccount(c, cfg, sender)
+	c := near.NewConnection(string(nodeURL))
+	a, err := near.LoadAccount(c, cfg, sender)
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func Send(argv0 string, args ...string) error {
 		return err
 	}
 	utils.PrettyPrintResponse(txResult)
-	res, err := nearapi.GetTransactionLastResult(txResult)
+	res, err := near.GetTransactionLastResult(txResult)
 	if err != nil {
 		return err
 	}

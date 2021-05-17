@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aurora-is-near/evm-bully/nearapi"
-	"github.com/aurora-is-near/evm-bully/nearapi/utils"
+	"github.com/aurora-is-near/near-api-go"
+	"github.com/aurora-is-near/near-api-go/utils"
 )
 
 func parseArgs(args string, base64enc bool) ([]byte, error) {
@@ -41,7 +41,7 @@ func Call(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "Schedule smart contract call which can modify state.\n")
 		fs.PrintDefaults()
 	}
-	cfg := nearapi.GetConfig()
+	cfg := near.GetConfig()
 	nodeURL.registerFlag(fs, cfg)
 	accountID := fs.String("accountId", "", "Unique identifier for the account that will be used to sign this call")
 	methodArgs := fs.String("args", "{}", "Arguments to the contract call, in JSON format by default (e.g. '{\"param_a\": \"value\"}')")
@@ -60,8 +60,8 @@ func Call(argv0 string, args ...string) error {
 	}
 	contract := fs.Arg(0)
 	method := fs.Arg(1)
-	c := nearapi.NewConnection(string(nodeURL))
-	a, err := nearapi.LoadAccount(c, cfg, *accountID)
+	c := near.NewConnection(string(nodeURL))
+	a, err := near.LoadAccount(c, cfg, *accountID)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func Call(argv0 string, args ...string) error {
 		return err
 	}
 	utils.PrettyPrintResponse(txResult)
-	res, err := nearapi.GetTransactionLastResult(txResult)
+	res, err := near.GetTransactionLastResult(txResult)
 	if err != nil {
 		return err
 	}

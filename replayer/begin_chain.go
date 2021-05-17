@@ -3,7 +3,7 @@ package replayer
 import (
 	"fmt"
 
-	"github.com/aurora-is-near/evm-bully/nearapi"
+	"github.com/aurora-is-near/near-api-go"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/near/borsh-go"
 )
@@ -36,7 +36,7 @@ func genesisAlloc(g *core.Genesis) ([]AccountBalance, error) {
 }
 
 func (r *Replayer) beginChainTx(
-	a *nearapi.Account,
+	a *near.Account,
 	evmContract string,
 	g *core.Genesis,
 ) *Tx {

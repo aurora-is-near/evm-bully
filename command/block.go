@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aurora-is-near/evm-bully/nearapi"
+	"github.com/aurora-is-near/near-api-go"
 )
 
 // Block implements the 'block' command.
@@ -18,7 +18,7 @@ func Block(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "Queries network for latest block details.\n")
 		fs.PrintDefaults()
 	}
-	cfg := nearapi.GetConfig()
+	cfg := near.GetConfig()
 	nodeURL.registerFlag(fs, cfg)
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -27,7 +27,7 @@ func Block(argv0 string, args ...string) error {
 		fs.Usage()
 		return flag.ErrHelp
 	}
-	c := nearapi.NewConnection(string(nodeURL))
+	c := near.NewConnection(string(nodeURL))
 	res, err := c.Block()
 	if err != nil {
 		return err

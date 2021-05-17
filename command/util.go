@@ -5,12 +5,12 @@ import (
 	"flag"
 	"fmt"
 
-	"github.com/aurora-is-near/evm-bully/nearapi"
+	"github.com/aurora-is-near/near-api-go"
 )
 
 type nodeURLFlag string
 
-func (n *nodeURLFlag) registerFlag(fs *flag.FlagSet, cfg *nearapi.Config) {
+func (n *nodeURLFlag) registerFlag(fs *flag.FlagSet, cfg *near.Config) {
 	fs.StringVar((*string)(n), "nodeUrl", cfg.NodeURL, "NEAR node URL")
 }
 

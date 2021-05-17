@@ -9,8 +9,8 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/aurora-is-near/evm-bully/nearapi"
-	"github.com/aurora-is-near/evm-bully/nearapi/utils"
+	"github.com/aurora-is-near/near-api-go"
+	"github.com/aurora-is-near/near-api-go/utils"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -52,7 +52,7 @@ func traverse(
 
 // startGenerator starts a goroutine that feeds transactions into the returned tx channel.
 func (r *Replayer) startTxGenerator(
-	a *nearapi.Account,
+	a *near.Account,
 	evmContract string,
 	db ethdb.Database,
 	blocks []common.Hash,
@@ -133,7 +133,7 @@ type Replayer struct {
 }
 
 // Replay transactions with evmContract owned by account a.
-func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
+func (r *Replayer) Replay(a *near.Account, evmContract string) error {
 	// determine cache directory
 	cacheDir, err := determineCacheDir(r.Testnet)
 	if err != nil {
@@ -152,7 +152,7 @@ func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
 	}()
 
 	// process transactions
-	batch := make([]nearapi.Action, 0, r.BatchSize)
+	batch := make([]near.Action, 0, r.BatchSize)
 	zeroAmount := big.NewInt(0)
 	c := r.startTxGenerator(a, evmContract, db, blocks)
 	for tx := range c {
@@ -178,9 +178,9 @@ func (r *Replayer) Replay(a *nearapi.Account, evmContract string) error {
 				if tx.Comment != "" {
 					fmt.Println("batching: " + tx.Comment)
 				}
-				batch = append(batch, nearapi.Action{
+				batch = append(batch, near.Action{
 					Enum: 2,
-					FunctionCall: nearapi.FunctionCall{
+					FunctionCall: near.FunctionCall{
 						MethodName: tx.MethodName,
 						Args:       tx.Args,
 						Gas:        r.Gas / uint64(r.BatchSize),

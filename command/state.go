@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aurora-is-near/evm-bully/nearapi"
-	"github.com/aurora-is-near/evm-bully/nearapi/utils"
+	"github.com/aurora-is-near/near-api-go"
+	"github.com/aurora-is-near/near-api-go/utils"
 )
 
 // State implements the 'state' command.
@@ -19,7 +19,7 @@ func State(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "View account state.\n")
 		fs.PrintDefaults()
 	}
-	cfg := nearapi.GetConfig()
+	cfg := near.GetConfig()
 	nodeURL.registerFlag(fs, cfg)
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -29,7 +29,7 @@ func State(argv0 string, args ...string) error {
 		return flag.ErrHelp
 	}
 	accountID := fs.Arg(0)
-	c := nearapi.NewConnection(string(nodeURL))
+	c := near.NewConnection(string(nodeURL))
 	res, err := c.State(accountID)
 	if err != nil {
 		return err
