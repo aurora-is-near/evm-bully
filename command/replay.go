@@ -25,6 +25,8 @@ func Replay(argv0 string, args ...string) error {
 	accountID := fs.String("accountId", "", "Unique identifier for the account that will be used to sign this call")
 	batch := fs.Bool("batch", false, "Batch transactions")
 	batchSize := fs.Int("size", 10, "Batch size when batching transactions")
+	breakBlock := fs.Int("breakblock", 0, "Break replaying at this block height")
+	breakTx := fs.Int("breaktx", 0, "Break replaying at this transaction (in block given by -breakblock)")
 	block := fs.Uint64("block", defaultGoerliBlockHeight, "Block height to replay to")
 	dataDir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
@@ -42,6 +44,18 @@ func Replay(argv0 string, args ...string) error {
 	}
 	if *accountID == "" {
 		return errors.New("option -accountId is mandatory")
+	}
+	if *startBlock != 0 && *breakBlock != 0 {
+		return errors.New("options -startblock and -breakblock exclude each other")
+	}
+	if *startBlock != 0 && *breakTx != 0 {
+		return errors.New("options -startblock and -breaktx exclude each other")
+	}
+	if *startTx != 0 && *breakBlock != 0 {
+		return errors.New("options -starttx and -breakblock exclude each other")
+	}
+	if *startTx != 0 && *breakTx != 0 {
+		return errors.New("options -starttx and -breaktx exclude each other")
 	}
 	chainID, testnet, err := testnetFlags.determineTestnet()
 	if err != nil {
@@ -73,6 +87,8 @@ func Replay(argv0 string, args ...string) error {
 		BatchSize:   *batchSize,
 		StartBlock:  *startBlock,
 		StartTx:     *startTx,
+		BreakBlock:  *breakBlock,
+		BreakTx:     *breakTx,
 	}
 	return r.Replay(a, evmContract)
 }

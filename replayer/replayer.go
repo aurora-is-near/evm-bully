@@ -18,6 +18,24 @@ import (
 	"github.com/ethereum/go-ethereum/log"
 )
 
+// A Replayer replays transactions.
+type Replayer struct {
+	ChainID     uint8
+	Gas         uint64
+	DataDir     string
+	Testnet     string
+	BlockHeight uint64
+	BlockHash   string
+	Defrost     bool
+	Skip        bool // skip empty blocks
+	Batch       bool // batch transactions
+	BatchSize   int  // batch size when batching transactions
+	StartBlock  int  // start replaying at this block height
+	StartTx     int  // start replaying at this transaction (in block given by StartBlock)
+	BreakBlock  int  // break replaying at this block height
+	BreakTx     int  // break replaying at this transaction (in block given by BreakBlock)
+}
+
 // traverse blockchain backwards starting at block b with given blockHeight
 // and return list of block hashes starting with the genesis block.
 func traverse(
@@ -64,7 +82,13 @@ func (r *Replayer) startTxGenerator(
 		genesisBlock := getGenesisBlock(r.Testnet)
 		c <- r.beginChainTx(a, evmContract, genesisBlock)
 
+	outer:
 		for blockHeight, blockHash := range blocks {
+			// early break, if necessary
+			if r.BreakBlock != 0 && r.BreakTx == 0 && blockHeight == r.BreakBlock {
+				c <- &Tx{Comment: fmt.Sprintf("breaking block %d", blockHeight)}
+				break
+			}
 			if blockHeight < r.StartBlock {
 				c <- &Tx{Comment: fmt.Sprintf("skipping block %d", blockHeight)}
 				continue
@@ -91,6 +115,11 @@ func (r *Replayer) startTxGenerator(
 
 			// actual transactions
 			for i, tx := range b.Transactions() {
+				// early break, if necessary
+				if r.BreakBlock != 0 && blockHeight == r.BreakBlock && i == r.BreakTx {
+					c <- &Tx{Comment: fmt.Sprintf("breaking at transaction %d (in block %d)", i, blockHeight)}
+					break outer
+				}
 				if blockHeight == r.StartBlock && i < r.StartTx {
 					c <- &Tx{Comment: fmt.Sprintf("skipping transaction %d (in block %d)", i, blockHeight)}
 					continue
@@ -119,22 +148,6 @@ func (r *Replayer) startTxGenerator(
 	}()
 
 	return c
-}
-
-// A Replayer replays transactions.
-type Replayer struct {
-	ChainID     uint8
-	Gas         uint64
-	DataDir     string
-	Testnet     string
-	BlockHeight uint64
-	BlockHash   string
-	Defrost     bool
-	Skip        bool // skip empty blocks
-	Batch       bool // batch transactions
-	BatchSize   int  // batch size when batching transactions
-	StartBlock  int  // start replaying at this block height
-	StartTx     int  // start replaying at this transaction (in block given by StartBlock)
 }
 
 // Replay transactions with evmContract owned by account a.
