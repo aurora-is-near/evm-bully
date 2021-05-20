@@ -32,6 +32,7 @@ func Replay(argv0 string, args ...string) error {
 	hash := fs.String("hash", defaultGoerliBlockHash, "Block hash to replay to")
 	skip := fs.Bool("skip", false, "Skip empty blocks")
 	startBlock := fs.Int("startblock", 0, "Start replaying at this block height")
+	startTx := fs.Int("starttx", 0, "Start replaying at this transaction (in block given by -startblock)")
 	timeout := fs.Duration("timeout", 0, "Timeout for JSON-RPC client")
 	cfg := near.GetConfig()
 	nodeURL.registerFlag(fs, cfg)
@@ -71,6 +72,7 @@ func Replay(argv0 string, args ...string) error {
 		Batch:       *batch,
 		BatchSize:   *batchSize,
 		StartBlock:  *startBlock,
+		StartTx:     *startTx,
 	}
 	return r.Replay(a, evmContract)
 }

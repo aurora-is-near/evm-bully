@@ -91,6 +91,10 @@ func (r *Replayer) startTxGenerator(
 
 			// actual transactions
 			for i, tx := range b.Transactions() {
+				if blockHeight == r.StartBlock && i < r.StartTx {
+					c <- &Tx{Comment: fmt.Sprintf("skipping transaction %d (in block %d)", i, blockHeight)}
+					continue
+				}
 				// get signed transaction in RLP encoding
 				rlp, err := tx.MarshalBinary()
 				if err != nil {
@@ -130,6 +134,7 @@ type Replayer struct {
 	Batch       bool // batch transactions
 	BatchSize   int  // batch size when batching transactions
 	StartBlock  int  // start replaying at this block height
+	StartTx     int  // start replaying at this transaction (in block given by StartBlock)
 }
 
 // Replay transactions with evmContract owned by account a.
