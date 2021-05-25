@@ -9,6 +9,7 @@ import (
 
 	"github.com/aurora-is-near/evm-bully/util/git"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/frankbraun/codechain/util/file"
 )
 
 type NEARDaemon struct {
@@ -49,6 +50,30 @@ func Setup(release bool) (*NEARDaemon, error) {
 		return nil, err
 	}
 	log.Info(fmt.Sprintf("head=%s", n.head))
+	// backup .near/local, if it exists
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	local := filepath.Join(home, ".near", "local")
+	exists, err := file.Exists(local)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		localOld := local + "_old"
+		log.Info(fmt.Sprintf("mv %s %s", local, localOld))
+		// remove old backup directory
+		if err := os.RemoveAll(localOld); err != nil {
+			return nil, err
+		}
+		// move
+		if err := os.Rename(local, localOld); err != nil {
+			return nil, err
+		}
+	} else {
+		log.Info(fmt.Sprintf("directory '%s' does not exist", local))
+	}
 	// make sure neard is build
 	if err := build(release); err != nil {
 		return nil, err
