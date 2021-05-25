@@ -31,6 +31,19 @@ func build(release bool) error {
 	return cmd.Run()
 }
 
+func initDaemon(release bool, localDir string) error {
+	var name string
+	if release {
+		name = filepath.Join(".", "target", "release", "neard")
+	} else {
+		name = filepath.Join(".", "target", "debug", "neard")
+	}
+	cmd := exec.Command(name, "--home="+localDir, "--verbose=true", "init")
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
+
 func Setup(release bool) (*NEARDaemon, error) {
 	var n NEARDaemon
 	log.Info("setup neard")
@@ -55,27 +68,31 @@ func Setup(release bool) (*NEARDaemon, error) {
 	if err != nil {
 		return nil, err
 	}
-	local := filepath.Join(home, ".near", "local")
-	exists, err := file.Exists(local)
+	localDir := filepath.Join(home, ".near", "local")
+	exists, err := file.Exists(localDir)
 	if err != nil {
 		return nil, err
 	}
 	if exists {
-		localOld := local + "_old"
-		log.Info(fmt.Sprintf("mv %s %s", local, localOld))
+		localOld := localDir + "_old"
+		log.Info(fmt.Sprintf("mv %s %s", localDir, localOld))
 		// remove old backup directory
 		if err := os.RemoveAll(localOld); err != nil {
 			return nil, err
 		}
 		// move
-		if err := os.Rename(local, localOld); err != nil {
+		if err := os.Rename(localDir, localOld); err != nil {
 			return nil, err
 		}
 	} else {
-		log.Info(fmt.Sprintf("directory '%s' does not exist", local))
+		log.Info(fmt.Sprintf("directory '%s' does not exist", localDir))
 	}
 	// make sure neard is build
 	if err := build(release); err != nil {
+		return nil, err
+	}
+	// initialize neard
+	if err := initDaemon(release, localDir); err != nil {
 		return nil, err
 	}
 	// switch back to original directory
