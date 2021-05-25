@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/aurora-is-near/evm-bully/replayer/neard"
 	"github.com/aurora-is-near/near-api-go"
 	"github.com/aurora-is-near/near-api-go/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -34,6 +35,8 @@ type Replayer struct {
 	StartTx     int  // start replaying at this transaction (in block given by StartBlock)
 	BreakBlock  int  // break replaying at this block height
 	BreakTx     int  // break replaying at this transaction (in block given by BreakBlock)
+	Release     bool // run release version of neard
+	Setup       bool // setup and run neard before replaying
 }
 
 // traverse blockchain backwards starting at block b with given blockHeight
@@ -168,6 +171,15 @@ func (r *Replayer) Replay(a *near.Account, evmContract string) error {
 		log.Info("closing DB")
 		db.Close()
 	}()
+
+	// setup neard, if necessary
+	if r.Setup {
+		neard, err := neard.Setup(r.Release)
+		if err != nil {
+			return err
+		}
+		defer neard.Stop()
+	}
 
 	// process transactions
 	batch := make([]near.Action, 0, r.BatchSize)

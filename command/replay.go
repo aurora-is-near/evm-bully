@@ -32,6 +32,8 @@ func Replay(argv0 string, args ...string) error {
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas a call can use (in gas units)")
 	hash := fs.String("hash", defaultGoerliBlockHash, "Block hash to replay to")
+	release := fs.Bool("release", false, "Run release version of neard")
+	setup := fs.Bool("setup", false, "Setup and run neard before replaying")
 	skip := fs.Bool("skip", false, "Skip empty blocks")
 	startBlock := fs.Int("startblock", 0, "Start replaying at this block height")
 	startTx := fs.Int("starttx", 0, "Start replaying at this transaction (in block given by -startblock)")
@@ -56,6 +58,9 @@ func Replay(argv0 string, args ...string) error {
 	}
 	if *startTx != 0 && *breakTx != 0 {
 		return errors.New("options -starttx and -breaktx exclude each other")
+	}
+	if *release && !*setup {
+		return errors.New("option -release requires option -setup")
 	}
 	chainID, testnet, err := testnetFlags.determineTestnet()
 	if err != nil {
@@ -89,6 +94,8 @@ func Replay(argv0 string, args ...string) error {
 		StartTx:     *startTx,
 		BreakBlock:  *breakBlock,
 		BreakTx:     *breakTx,
+		Release:     *release,
+		Setup:       *setup,
 	}
 	return r.Replay(a, evmContract)
 }
