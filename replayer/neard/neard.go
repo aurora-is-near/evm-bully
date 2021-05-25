@@ -2,7 +2,7 @@
 package neard
 
 import (
-	"encoding/json"
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -14,7 +14,8 @@ import (
 )
 
 type NEARDaemon struct {
-	head string
+	head       string
+	nearDaemon *exec.Cmd
 }
 
 func build(release bool) error {
@@ -56,28 +57,33 @@ func editGenesis(localDir string) error {
 	if err != nil {
 		return err
 	}
-	// unmarshal
-	jsn := make(map[string]interface{})
-	if err := json.Unmarshal(data, &jsn); err != nil {
-		return err
-	}
-	// "runtime_config" -> "wasm_config" -> "limit_config"
-	runtimeConfig := jsn["runtime_config"].(map[string]interface{})
-	wasmConfig := runtimeConfig["wasm_config"].(map[string]interface{})
-	limitConfig := wasmConfig["limit_config"].(map[string]interface{})
-	// change default values
-	limitConfig["max_gas_burnt"] = 800000000000000
-	limitConfig["max_total_prepaid_gas"] = 800000000000000
-	// marshal
-	data, err = json.MarshalIndent(jsn, "", "  ")
-	if err != nil {
-		return err
-	}
+	// change default values the brute force way, neard chokes on edited JSON
+	data = bytes.Replace(data,
+		[]byte("\"max_gas_burnt\": 200000000000000"),
+		[]byte("\"max_gas_burnt\": 800000000000000"),
+		1)
+	data = bytes.Replace(data,
+		[]byte("\"max_total_prepaid_gas\": 300000000000000"),
+		[]byte("\"max_total_prepaid_gas\": 800000000000000"),
+		1)
 	// write file
 	if err := os.WriteFile(filename, data, 0644); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (n *NEARDaemon) start(release bool, localDir string) error {
+	var name string
+	if release {
+		name = filepath.Join(".", "target", "release", "neard")
+	} else {
+		name = filepath.Join(".", "target", "debug", "neard")
+	}
+	n.nearDaemon = exec.Command(name, "--home="+localDir, "--verbose=true", "run")
+	n.nearDaemon.Stdout = os.Stdout
+	n.nearDaemon.Stderr = os.Stderr
+	return n.nearDaemon.Start()
 }
 
 func Setup(release bool) (*NEARDaemon, error) {
@@ -135,6 +141,10 @@ func Setup(release bool) (*NEARDaemon, error) {
 	if err := editGenesis(localDir); err != nil {
 		return nil, err
 	}
+	// start neard
+	if err := n.start(release, localDir); err != nil {
+		return nil, err
+	}
 	// switch back to original directory
 	if err := os.Chdir(cwd); err != nil {
 		return nil, err
@@ -142,6 +152,7 @@ func Setup(release bool) (*NEARDaemon, error) {
 	return &n, nil
 }
 
-func (n *NEARDaemon) Stop() {
+func (n *NEARDaemon) Stop() error {
 	log.Info("stop neard")
+	return n.nearDaemon.Process.Signal(os.Interrupt)
 }
