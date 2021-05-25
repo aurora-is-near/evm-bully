@@ -1,4 +1,4 @@
-### Ethereum testnet sizes
+## Ethereum testnet sizes
 
 - goerli: ~13 GB
 - rinkeby: ~66 GB
