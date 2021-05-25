@@ -2,6 +2,7 @@
 package neard
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -42,6 +43,41 @@ func initDaemon(release bool, localDir string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func editGenesis(localDir string) error {
+	filename := filepath.Join(localDir, "genesis.json")
+	backup := filepath.Join(localDir, "genesis_old.json")
+	if err := file.Copy(filename, backup); err != nil {
+		return err
+	}
+	// read file
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return err
+	}
+	// unmarshal
+	jsn := make(map[string]interface{})
+	if err := json.Unmarshal(data, &jsn); err != nil {
+		return err
+	}
+	// "runtime_config" -> "wasm_config" -> "limit_config"
+	runtimeConfig := jsn["runtime_config"].(map[string]interface{})
+	wasmConfig := runtimeConfig["wasm_config"].(map[string]interface{})
+	limitConfig := wasmConfig["limit_config"].(map[string]interface{})
+	// change default values
+	limitConfig["max_gas_burnt"] = 800000000000000
+	limitConfig["max_total_prepaid_gas"] = 800000000000000
+	// marshal
+	data, err = json.MarshalIndent(jsn, "", "  ")
+	if err != nil {
+		return err
+	}
+	// write file
+	if err := os.WriteFile(filename, data, 0644); err != nil {
+		return err
+	}
+	return nil
 }
 
 func Setup(release bool) (*NEARDaemon, error) {
@@ -93,6 +129,10 @@ func Setup(release bool) (*NEARDaemon, error) {
 	}
 	// initialize neard
 	if err := initDaemon(release, localDir); err != nil {
+		return nil, err
+	}
+	// edit genesis.json
+	if err := editGenesis(localDir); err != nil {
 		return nil, err
 	}
 	// switch back to original directory
