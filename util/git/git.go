@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Returns the current Git HEAD in the current working directory.
+// Head returns the current Git HEAD in the current working directory.
 func Head() (string, error) {
 	cmd := exec.Command("git", "rev-parse", "HEAD")
 	var stdout bytes.Buffer

@@ -16,6 +16,7 @@ import (
 	"github.com/aurora-is-near/evm-bully/replayer/neard"
 	"github.com/aurora-is-near/evm-bully/util/aurora"
 	"github.com/aurora-is-near/evm-bully/util/git"
+	"github.com/aurora-is-near/evm-bully/util/tar"
 	"github.com/aurora-is-near/near-api-go"
 	"github.com/aurora-is-near/near-api-go/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -23,6 +24,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/frankbraun/codechain/util/file"
 )
 
 // A Replayer replays transactions.
@@ -412,5 +414,23 @@ func (r *Replayer) SaveBreakpoint() error {
 	}
 	log.Info(fmt.Sprintf("'%s' written", filename))
 
-	return nil
+	// copy key file
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
+	filename = r.AccountID + ".json"
+	path := filepath.Join(home, ".near-credentials", r.Config.NetworkID, filename)
+	if err := file.Copy(path, filepath.Join(dir, filename)); err != nil {
+		return err
+	}
+
+	// copy local nearcore directory
+	localDir := filepath.Join(home, ".near", "local")
+	if err := file.CopyDir(localDir, filepath.Join(dir, "local")); err != nil {
+		return err
+	}
+
+	// tar everything up
+	return tar.Create(dir)
 }
