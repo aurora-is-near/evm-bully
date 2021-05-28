@@ -1,6 +1,8 @@
 package command
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -41,7 +43,7 @@ func Replay(argv0 string, args ...string) error {
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
-	if *accountID == "" {
+	if !*setup && *accountID == "" {
 		return errors.New("option -accountId is mandatory")
 	}
 	if *startBlock != 0 && *breakBlock != 0 {
@@ -64,11 +66,35 @@ func Replay(argv0 string, args ...string) error {
 		return err
 	}
 	adjustBlockDefaults(block, hash, testnet)
-	if fs.NArg() != 1 {
-		fs.Usage()
-		return flag.ErrHelp
+	if !*setup {
+		if fs.NArg() != 1 {
+			fs.Usage()
+			return flag.ErrHelp
+		}
+	} else {
+		if fs.NArg() > 1 {
+			fs.Usage()
+			return flag.ErrHelp
+		}
 	}
-	evmContract := fs.Arg(0)
+
+	// determine evmContract
+	var evmContract string
+	if fs.NArg() == 1 {
+		evmContract = fs.Arg(0)
+	} else {
+		var b [16]byte
+		if _, err := rand.Read(b[:]); err != nil {
+			return err
+		}
+		evmContract = hex.EncodeToString(b[:]) + ".test.near"
+		fmt.Fprintf(os.Stderr, "evmContract name generated: %s\n", evmContract)
+	}
+
+	// set accountID, if necessary
+	if *accountID == "" {
+		*accountID = evmContract
+	}
 
 	// run replayer
 	r := replayer.Replayer{
