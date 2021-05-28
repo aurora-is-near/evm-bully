@@ -18,7 +18,8 @@ const (
 )
 
 const (
-	defaultGas = 800000000000000
+	defaultGas            = 800000000000000
+	defaultInitialBalance = "100"
 )
 
 var (

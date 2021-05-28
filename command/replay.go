@@ -31,6 +31,7 @@ func Replay(argv0 string, args ...string) error {
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas a call can use (in gas units)")
 	hash := fs.String("hash", defaultGoerliBlockHash, "Block hash to replay to")
+	initialBalance := fs.String("initial-balance", defaultInitialBalance, "Number of tokens to transfer to newly created account")
 	release := fs.Bool("release", false, "Run release version of neard")
 	setup := fs.Bool("setup", false, "Setup and run neard before replaying")
 	skip := fs.Bool("skip", false, "Skip empty blocks")
@@ -42,6 +43,9 @@ func Replay(argv0 string, args ...string) error {
 	testnetFlags.registerFlags(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
+	}
+	if !*setup && *initialBalance != defaultInitialBalance {
+		return errors.New("option -initial-balance requires -setup")
 	}
 	if !*setup && *accountID == "" {
 		return errors.New("option -accountId is mandatory")
@@ -98,25 +102,26 @@ func Replay(argv0 string, args ...string) error {
 
 	// run replayer
 	r := replayer.Replayer{
-		AccountID:   *accountID,
-		Config:      cfg,
-		Timeout:     *timeout,
-		ChainID:     chainID,
-		Gas:         *gas,
-		DataDir:     *dataDir,
-		Testnet:     testnet,
-		BlockHeight: *block,
-		BlockHash:   *hash,
-		Defrost:     *defrost,
-		Skip:        *skip,
-		Batch:       *batch,
-		BatchSize:   *batchSize,
-		StartBlock:  *startBlock,
-		StartTx:     *startTx,
-		BreakBlock:  *breakBlock,
-		BreakTx:     *breakTx,
-		Release:     *release,
-		Setup:       *setup,
+		AccountID:      *accountID,
+		Config:         cfg,
+		Timeout:        *timeout,
+		ChainID:        chainID,
+		Gas:            *gas,
+		DataDir:        *dataDir,
+		Testnet:        testnet,
+		BlockHeight:    *block,
+		BlockHash:      *hash,
+		Defrost:        *defrost,
+		Skip:           *skip,
+		Batch:          *batch,
+		BatchSize:      *batchSize,
+		StartBlock:     *startBlock,
+		StartTx:        *startTx,
+		BreakBlock:     *breakBlock,
+		BreakTx:        *breakTx,
+		Release:        *release,
+		Setup:          *setup,
+		InitialBalance: *initialBalance,
 	}
 	return r.Replay(evmContract)
 }

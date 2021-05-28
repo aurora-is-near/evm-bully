@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/aurora-is-near/evm-bully/replayer/neard"
@@ -22,25 +23,26 @@ import (
 
 // A Replayer replays transactions.
 type Replayer struct {
-	AccountID   string
-	Config      *near.Config
-	Timeout     time.Duration
-	ChainID     uint8
-	Gas         uint64
-	DataDir     string
-	Testnet     string
-	BlockHeight uint64
-	BlockHash   string
-	Defrost     bool
-	Skip        bool // skip empty blocks
-	Batch       bool // batch transactions
-	BatchSize   int  // batch size when batching transactions
-	StartBlock  int  // start replaying at this block height
-	StartTx     int  // start replaying at this transaction (in block given by StartBlock)
-	BreakBlock  int  // break replaying at this block height
-	BreakTx     int  // break replaying at this transaction (in block given by BreakBlock)
-	Release     bool // run release version of neard
-	Setup       bool // setup and run neard before replaying
+	AccountID      string
+	Config         *near.Config
+	Timeout        time.Duration
+	ChainID        uint8
+	Gas            uint64
+	DataDir        string
+	Testnet        string
+	BlockHeight    uint64
+	BlockHash      string
+	Defrost        bool
+	Skip           bool // skip empty blocks
+	Batch          bool // batch transactions
+	BatchSize      int  // batch size when batching transactions
+	StartBlock     int  // start replaying at this block height
+	StartTx        int  // start replaying at this transaction (in block given by StartBlock)
+	BreakBlock     int  // break replaying at this block height
+	BreakTx        int  // break replaying at this transaction (in block given by BreakBlock)
+	Release        bool // run release version of neard
+	Setup          bool // setup and run neard before replaying
+	InitialBalance string
 }
 
 // traverse blockchain backwards starting at block b with given blockHeight
@@ -176,8 +178,19 @@ func (r *Replayer) Replay(evmContract string) error {
 		db.Close()
 	}()
 
-	// setup neard, if necessary
+	// setup, if necessary
 	if r.Setup {
+		// create account
+		ca := CreateAccount{
+			Config:         r.Config,
+			InitialBalance: r.InitialBalance,
+			MasterAccount:  strings.Join(strings.Split(r.AccountID, ".")[1:], "."),
+		}
+		if err := ca.Create(r.AccountID); err != nil {
+			return err
+		}
+
+		// setup neard
 		neard, err := neard.Setup(r.Release)
 		if err != nil {
 			return err

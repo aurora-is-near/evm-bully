@@ -18,7 +18,7 @@ func CreateAccount(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "Create a new developer account (subaccount of the masterAccount, ex: app.alice.test)\n")
 		fs.PrintDefaults()
 	}
-	initialBalance := fs.String("initial-balance", "100", "Number of tokens to transfer to newly created account")
+	initialBalance := fs.String("initial-balance", defaultInitialBalance, "Number of tokens to transfer to newly created account")
 	masterAccount := fs.String("master-account", "", "Account used to create requested account")
 	cfg := near.GetConfig()
 	registerCfgFlags(fs, cfg, true)
