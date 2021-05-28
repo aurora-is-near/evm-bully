@@ -12,10 +12,7 @@ import (
 
 // Replay implements the 'replay' command.
 func Replay(argv0 string, args ...string) error {
-	var (
-		nodeURL      nodeURLFlag
-		testnetFlags testnetFlags
-	)
+	var testnetFlags testnetFlags
 	fs := flag.NewFlagSet(argv0, flag.ContinueOnError)
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <evmContract>\n", argv0)
@@ -39,7 +36,7 @@ func Replay(argv0 string, args ...string) error {
 	startTx := fs.Int("starttx", 0, "Start replaying at this transaction (in block given by -startblock)")
 	timeout := fs.Duration("timeout", 0, "Timeout for JSON-RPC client")
 	cfg := near.GetConfig()
-	nodeURL.registerFlag(fs, cfg)
+	registerCfgFlags(fs, cfg, true)
 	testnetFlags.registerFlags(fs)
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -73,7 +70,7 @@ func Replay(argv0 string, args ...string) error {
 	}
 	evmContract := fs.Arg(0)
 	// load account
-	c := near.NewConnectionWithTimeout(string(nodeURL), *timeout)
+	c := near.NewConnectionWithTimeout(cfg.NodeURL, *timeout)
 	a, err := near.LoadAccount(c, cfg, *accountID)
 	if err != nil {
 		return err

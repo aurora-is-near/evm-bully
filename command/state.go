@@ -12,7 +12,6 @@ import (
 
 // State implements the 'state' command.
 func State(argv0 string, args ...string) error {
-	var nodeURL nodeURLFlag
 	fs := flag.NewFlagSet(argv0, flag.ContinueOnError)
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <accountId>\n", argv0)
@@ -20,7 +19,7 @@ func State(argv0 string, args ...string) error {
 		fs.PrintDefaults()
 	}
 	cfg := near.GetConfig()
-	nodeURL.registerFlag(fs, cfg)
+	registerCfgFlags(fs, cfg, false)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -29,7 +28,7 @@ func State(argv0 string, args ...string) error {
 		return flag.ErrHelp
 	}
 	accountID := fs.Arg(0)
-	c := near.NewConnection(string(nodeURL))
+	c := near.NewConnection(cfg.NodeURL)
 	res, err := c.State(accountID)
 	if err != nil {
 		return err

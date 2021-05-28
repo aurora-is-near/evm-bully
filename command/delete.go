@@ -12,7 +12,6 @@ import (
 
 // Delete implements the 'delete' command.
 func Delete(argv0 string, args ...string) error {
-	var nodeURL nodeURLFlag
 	fs := flag.NewFlagSet(argv0, flag.ContinueOnError)
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <accountId> <beneficiaryId>\n", argv0)
@@ -20,7 +19,7 @@ func Delete(argv0 string, args ...string) error {
 		fs.PrintDefaults()
 	}
 	cfg := near.GetConfig()
-	nodeURL.registerFlag(fs, cfg)
+	registerCfgFlags(fs, cfg, true)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -30,13 +29,13 @@ func Delete(argv0 string, args ...string) error {
 	}
 	accountID := fs.Arg(0)
 	beneficiaryID := fs.Arg(1)
-	c := near.NewConnection(string(nodeURL))
+	c := near.NewConnection(cfg.NodeURL)
 	a, err := near.LoadAccount(c, cfg, accountID)
 	if err != nil {
 		return err
 	}
 	fmt.Printf("Deleting account. Account ID: %s, node: %s, beneficiary: %s\n",
-		accountID, string(nodeURL), beneficiaryID)
+		accountID, cfg.NodeURL, beneficiaryID)
 	txResult, err := a.DeleteAccount(beneficiaryID)
 	if err != nil {
 		return err

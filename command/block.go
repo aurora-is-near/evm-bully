@@ -11,7 +11,6 @@ import (
 
 // Block implements the 'block' command.
 func Block(argv0 string, args ...string) error {
-	var nodeURL nodeURLFlag
 	fs := flag.NewFlagSet(argv0, flag.ContinueOnError)
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s\n", argv0)
@@ -19,7 +18,7 @@ func Block(argv0 string, args ...string) error {
 		fs.PrintDefaults()
 	}
 	cfg := near.GetConfig()
-	nodeURL.registerFlag(fs, cfg)
+	registerCfgFlags(fs, cfg, false)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -27,7 +26,7 @@ func Block(argv0 string, args ...string) error {
 		fs.Usage()
 		return flag.ErrHelp
 	}
-	c := near.NewConnection(string(nodeURL))
+	c := near.NewConnection(cfg.NodeURL)
 	res, err := c.Block()
 	if err != nil {
 		return err

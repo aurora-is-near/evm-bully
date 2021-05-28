@@ -12,7 +12,6 @@ import (
 
 // Send implements the 'send' command.
 func Send(argv0 string, args ...string) error {
-	var nodeURL nodeURLFlag
 	fs := flag.NewFlagSet(argv0, flag.ContinueOnError)
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <sender> <receiver> <amount>\n", argv0)
@@ -20,7 +19,7 @@ func Send(argv0 string, args ...string) error {
 		fs.PrintDefaults()
 	}
 	cfg := near.GetConfig()
-	nodeURL.registerFlag(fs, cfg)
+	registerCfgFlags(fs, cfg, true)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -31,7 +30,7 @@ func Send(argv0 string, args ...string) error {
 	sender := fs.Arg(0)
 	receiver := fs.Arg(1)
 	amount := fs.Arg(2)
-	c := near.NewConnection(string(nodeURL))
+	c := near.NewConnection(cfg.NodeURL)
 	a, err := near.LoadAccount(c, cfg, sender)
 	if err != nil {
 		return err

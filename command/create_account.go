@@ -21,7 +21,7 @@ func CreateAccount(argv0 string, args ...string) error {
 	initialBalance := fs.String("initial-balance", "100", "Number of tokens to transfer to newly created account")
 	masterAccount := fs.String("master-account", "", "Account used to create requested account")
 	cfg := near.GetConfig()
-	registerCfgFlag(fs, cfg)
+	registerCfgFlags(fs, cfg, true)
 	if err := fs.Parse(args); err != nil {
 		return err
 	}

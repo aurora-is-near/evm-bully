@@ -34,7 +34,6 @@ func parseArgs(args string, base64enc bool) ([]byte, error) {
 
 // Call implements the 'call' command.
 func Call(argv0 string, args ...string) error {
-	var nodeURL nodeURLFlag
 	fs := flag.NewFlagSet(argv0, flag.ContinueOnError)
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s <contractName> <methodName>\n", argv0)
@@ -42,7 +41,7 @@ func Call(argv0 string, args ...string) error {
 		fs.PrintDefaults()
 	}
 	cfg := near.GetConfig()
-	nodeURL.registerFlag(fs, cfg)
+	registerCfgFlags(fs, cfg, true)
 	accountID := fs.String("accountId", "", "Unique identifier for the account that will be used to sign this call")
 	methodArgs := fs.String("args", "{}", "Arguments to the contract call, in JSON format by default (e.g. '{\"param_a\": \"value\"}')")
 	base64enc := fs.Bool("base64", false, "Treat arguments as base64-encoded BLOB")
@@ -60,7 +59,7 @@ func Call(argv0 string, args ...string) error {
 	}
 	contract := fs.Arg(0)
 	method := fs.Arg(1)
-	c := near.NewConnection(string(nodeURL))
+	c := near.NewConnection(cfg.NodeURL)
 	a, err := near.LoadAccount(c, cfg, *accountID)
 	if err != nil {
 		return err

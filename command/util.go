@@ -8,14 +8,10 @@ import (
 	"github.com/aurora-is-near/near-api-go"
 )
 
-type nodeURLFlag string
-
-func (n *nodeURLFlag) registerFlag(fs *flag.FlagSet, cfg *near.Config) {
-	fs.StringVar((*string)(n), "nodeUrl", cfg.NodeURL, "NEAR node URL")
-}
-
-func registerCfgFlag(fs *flag.FlagSet, cfg *near.Config) {
-	fs.StringVar(&cfg.KeyPath, "keyPath", cfg.KeyPath, "Path to master account key")
+func registerCfgFlags(fs *flag.FlagSet, cfg *near.Config, keyPath bool) {
+	if keyPath {
+		fs.StringVar(&cfg.KeyPath, "keyPath", cfg.KeyPath, "Path to master account key")
+	}
 	fs.StringVar(&cfg.NodeURL, "nodeUrl", cfg.NodeURL, "NEAR node URL")
 }
 
