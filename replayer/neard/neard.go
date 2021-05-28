@@ -14,7 +14,7 @@ import (
 )
 
 type NEARDaemon struct {
-	head       string
+	Head       string
 	nearDaemon *exec.Cmd
 }
 
@@ -100,11 +100,11 @@ func Setup(release bool) (*NEARDaemon, error) {
 		return nil, err
 	}
 	// get current HEAD
-	n.head, err = git.Head()
+	n.Head, err = git.Head()
 	if err != nil {
 		return nil, err
 	}
-	log.Info(fmt.Sprintf("head=%s", n.head))
+	log.Info(fmt.Sprintf("head=%s", n.Head))
 	// backup .near/local, if it exists
 	home, err := os.UserHomeDir()
 	if err != nil {

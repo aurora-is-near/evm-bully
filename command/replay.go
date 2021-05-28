@@ -131,5 +131,11 @@ func Replay(argv0 string, args ...string) error {
 		InitialBalance: *initialBalance,
 		Contract:       *contract,
 	}
-	return r.Replay(evmContract)
+	if err := r.Replay(evmContract); err != nil {
+		return err
+	}
+	if *breakBlock != 0 {
+		return r.SaveBreakpoint()
+	}
+	return nil
 }

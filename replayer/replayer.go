@@ -7,12 +7,15 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/aurora-is-near/evm-bully/replayer/neard"
 	"github.com/aurora-is-near/evm-bully/util/aurora"
+	"github.com/aurora-is-near/evm-bully/util/git"
 	"github.com/aurora-is-near/near-api-go"
 	"github.com/aurora-is-near/near-api-go/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -45,6 +48,15 @@ type Replayer struct {
 	Setup          bool // setup and run neard before replaying
 	InitialBalance string
 	Contract       string
+	Breakpoint     Breakpoint
+}
+
+// Breakpoint defines a break point.
+type Breakpoint struct {
+	NearcoreHead     string `json:"nearcore"`
+	AuroraEngineHead string `json:"aurora-engine"`
+	Transaction      string `json:"transaction"`
+	tx               *types.Transaction
 }
 
 // traverse blockchain backwards starting at block b with given blockHeight
@@ -95,11 +107,6 @@ func (r *Replayer) startTxGenerator(
 
 	outer:
 		for blockHeight, blockHash := range blocks {
-			// early break, if necessary
-			if r.BreakBlock != 0 && r.BreakTx == 0 && blockHeight == r.BreakBlock {
-				c <- &Tx{Comment: fmt.Sprintf("breaking block %d", blockHeight)}
-				break
-			}
 			if blockHeight < r.StartBlock {
 				c <- &Tx{Comment: fmt.Sprintf("skipping block %d", blockHeight)}
 				continue
@@ -110,6 +117,15 @@ func (r *Replayer) startTxGenerator(
 				c <- &Tx{Error: fmt.Errorf("cannot read block at height %d with hash %s",
 					blockHeight, blockHash.Hex())}
 				return
+			}
+
+			// early break, if necessary
+			if r.BreakBlock != 0 && r.BreakTx == 0 && blockHeight == r.BreakBlock {
+				c <- &Tx{Comment: fmt.Sprintf("breaking block %d", blockHeight)}
+				log.Info("sleep")
+				time.Sleep(5 * time.Second)
+				r.Breakpoint.tx = b.Transactions()[0]
+				break
 			}
 
 			// block context
@@ -129,6 +145,9 @@ func (r *Replayer) startTxGenerator(
 				// early break, if necessary
 				if r.BreakBlock != 0 && blockHeight == r.BreakBlock && i == r.BreakTx {
 					c <- &Tx{Comment: fmt.Sprintf("breaking at transaction %d (in block %d)", i, blockHeight)}
+					log.Info("sleep")
+					time.Sleep(5 * time.Second)
+					r.Breakpoint.tx = tx
 					break outer
 				}
 				if blockHeight == r.StartBlock && i < r.StartTx {
@@ -189,6 +208,7 @@ func (r *Replayer) Replay(evmContract string) error {
 			return err
 		}
 		defer neard.Stop()
+		r.Breakpoint.NearcoreHead = neard.Head
 
 		log.Info("sleep")
 		time.Sleep(5 * time.Second)
@@ -327,5 +347,70 @@ func procTxResult(batch bool, tx *types.Transaction, txResult map[string]interfa
 		}
 		return errors.New("replayer: transaction failed")
 	}
+	return nil
+}
+
+func auroraEngineHead(contract string) (string, error) {
+	// get cwd
+	cwd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+	fmt.Println(cwd)
+	// switch to aurora-engine directory
+	if err := os.Chdir(filepath.Dir(contract)); err != nil {
+		return "", err
+	}
+	// get current HEAD
+	head, err := git.Head()
+	if err != nil {
+		return "", err
+	}
+	log.Info(fmt.Sprintf("head=%s", head))
+	// switch back to original directory
+	if err := os.Chdir(cwd); err != nil {
+		return "", err
+	}
+	return head, nil
+}
+
+// SaveBreakpoint saves replayer break point for evmContract.
+func (r *Replayer) SaveBreakpoint() error {
+	var err error
+	dir := fmt.Sprintf("%s-block-%d-tx-%d", r.Testnet, r.BreakBlock, r.BreakTx)
+	log.Info(fmt.Sprintf("save breakpoint %s", dir))
+
+	// get HEAD of aurora-engine
+	r.Breakpoint.AuroraEngineHead, err = auroraEngineHead(r.Contract)
+	if err != nil {
+		return err
+	}
+
+	// encode transaction
+	rlp, err := r.Breakpoint.tx.MarshalBinary()
+	if err != nil {
+		return err
+	}
+	r.Breakpoint.Transaction = hex.EncodeToString(rlp)
+
+	// remove output dir
+	if err := os.RemoveAll(dir); err != nil {
+		return err
+	}
+	if err := os.Mkdir(dir, 0755); err != nil {
+		return err
+	}
+
+	// marshal breakpoint data structure
+	jsn, err := json.MarshalIndent(&r.Breakpoint, "", "  ")
+	if err != nil {
+		return err
+	}
+	filename := filepath.Join(dir, "breakpoint.json")
+	if err := os.WriteFile(filename, jsn, 0644); err != nil {
+		return err
+	}
+	log.Info(fmt.Sprintf("'%s' written", filename))
+
 	return nil
 }
