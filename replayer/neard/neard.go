@@ -18,7 +18,8 @@ type NEARDaemon struct {
 	nearDaemon *exec.Cmd
 }
 
-func build(release bool) error {
+// Buildbuilds neard in CWD.
+func Build(release bool) error {
 	args := []string{
 		"build",
 		"--package", "neard",
@@ -130,7 +131,7 @@ func Setup(release bool) (*NEARDaemon, error) {
 		log.Info(fmt.Sprintf("directory '%s' does not exist", localDir))
 	}
 	// make sure neard is build
-	if err := build(release); err != nil {
+	if err := Build(release); err != nil {
 		return nil, err
 	}
 	// initialize neard
@@ -142,6 +143,35 @@ func Setup(release bool) (*NEARDaemon, error) {
 		return nil, err
 	}
 	// start neard
+	if err := n.start(release, localDir); err != nil {
+		return nil, err
+	}
+	// switch back to original directory
+	if err := os.Chdir(cwd); err != nil {
+		return nil, err
+	}
+	return &n, nil
+}
+
+func Start(release bool) (*NEARDaemon, error) {
+	var n NEARDaemon
+	log.Info("start neard")
+	// get cwd
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	// switch to nearcore directory
+	nearDir := filepath.Join(cwd, "..", "nearcore")
+	if err := os.Chdir(nearDir); err != nil {
+		return nil, err
+	}
+	// start neard
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+	localDir := filepath.Join(home, ".near", "local")
 	if err := n.start(release, localDir); err != nil {
 		return nil, err
 	}

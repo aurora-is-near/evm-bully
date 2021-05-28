@@ -19,3 +19,11 @@ func Head() (string, error) {
 	}
 	return strings.TrimSpace(stdout.String()), nil
 }
+
+// Checkout checks out the given head in the current working directory.
+func Checkout(head string) error {
+	cmd := exec.Command("git", "checkout", head)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
+}
