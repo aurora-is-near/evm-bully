@@ -14,6 +14,11 @@ func (n *nodeURLFlag) registerFlag(fs *flag.FlagSet, cfg *near.Config) {
 	fs.StringVar((*string)(n), "nodeUrl", cfg.NodeURL, "NEAR node URL")
 }
 
+func registerCfgFlag(fs *flag.FlagSet, cfg *near.Config) {
+	fs.StringVar(&cfg.KeyPath, "keyPath", cfg.KeyPath, "Path to master account key")
+	fs.StringVar(&cfg.NodeURL, "nodeUrl", cfg.NodeURL, "NEAR node URL")
+}
+
 type testnetFlags struct {
 	goerli  bool
 	rinkeby bool

@@ -3,7 +3,7 @@ module github.com/aurora-is-near/evm-bully
 go 1.15
 
 require (
-	github.com/aurora-is-near/near-api-go v0.0.2
+	github.com/aurora-is-near/near-api-go v0.0.8
 	github.com/btcsuite/btcd v0.21.0-beta // indirect
 	github.com/ethereum/go-ethereum v1.10.3
 	github.com/frankbraun/codechain v1.2.0

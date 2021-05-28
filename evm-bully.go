@@ -22,6 +22,7 @@ func usage() {
 	cmd := os.Args[0] + " [-v]"
 	fmt.Fprintf(os.Stderr, "Usage: %s genesis\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s replay <evmContract>\n", cmd)
+	fmt.Fprintf(os.Stderr, "       %s create-account <accountId>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s block\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s state <accountId>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s delete <accountId> <beneficiaryId>\n", cmd)
@@ -61,6 +62,8 @@ func main() {
 		err = command.Genesis(argv0, args...)
 	case "replay":
 		err = command.Replay(argv0, args...)
+	case "create-account":
+		err = command.CreateAccount(argv0, args...)
 	case "block":
 		err = command.Block(argv0, args...)
 	case "state":
