@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"time"
 
 	"github.com/aurora-is-near/evm-bully/replayer/neard"
 	"github.com/aurora-is-near/near-api-go"
@@ -21,6 +22,9 @@ import (
 
 // A Replayer replays transactions.
 type Replayer struct {
+	AccountID   string
+	Config      *near.Config
+	Timeout     time.Duration
 	ChainID     uint8
 	Gas         uint64
 	DataDir     string
@@ -153,8 +157,8 @@ func (r *Replayer) startTxGenerator(
 	return c
 }
 
-// Replay transactions with evmContract owned by account a.
-func (r *Replayer) Replay(a *near.Account, evmContract string) error {
+// Replay transactions with evmContract.
+func (r *Replayer) Replay(evmContract string) error {
 	// determine cache directory
 	cacheDir, err := determineCacheDir(r.Testnet)
 	if err != nil {
@@ -179,6 +183,13 @@ func (r *Replayer) Replay(a *near.Account, evmContract string) error {
 			return err
 		}
 		defer neard.Stop()
+	}
+
+	// load account
+	conn := near.NewConnectionWithTimeout(r.Config.NodeURL, r.Timeout)
+	a, err := near.LoadAccount(conn, r.Config, r.AccountID)
+	if err != nil {
+		return err
 	}
 
 	// process transactions

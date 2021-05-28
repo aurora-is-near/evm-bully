@@ -69,14 +69,12 @@ func Replay(argv0 string, args ...string) error {
 		return flag.ErrHelp
 	}
 	evmContract := fs.Arg(0)
-	// load account
-	c := near.NewConnectionWithTimeout(cfg.NodeURL, *timeout)
-	a, err := near.LoadAccount(c, cfg, *accountID)
-	if err != nil {
-		return err
-	}
+
 	// run replayer
 	r := replayer.Replayer{
+		AccountID:   *accountID,
+		Config:      cfg,
+		Timeout:     *timeout,
 		ChainID:     chainID,
 		Gas:         *gas,
 		DataDir:     *dataDir,
@@ -94,5 +92,5 @@ func Replay(argv0 string, args ...string) error {
 		Release:     *release,
 		Setup:       *setup,
 	}
-	return r.Replay(a, evmContract)
+	return r.Replay(evmContract)
 }
