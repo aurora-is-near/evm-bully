@@ -109,7 +109,6 @@ func Replay(argv0 string, args ...string) error {
 
 	// run replayer
 	r := replayer.Replayer{
-		AccountID:      *accountID,
 		Config:         cfg,
 		Timeout:        *timeout,
 		ChainID:        chainID,
@@ -130,6 +129,9 @@ func Replay(argv0 string, args ...string) error {
 		Setup:          *setup,
 		InitialBalance: *initialBalance,
 		Contract:       *contract,
+		Breakpoint: replayer.Breakpoint{
+			AccountID: *accountID,
+		},
 	}
 	if err := r.Replay(evmContract); err != nil {
 		return err

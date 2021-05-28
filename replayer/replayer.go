@@ -29,7 +29,6 @@ import (
 
 // A Replayer replays transactions.
 type Replayer struct {
-	AccountID      string
 	Config         *near.Config
 	Timeout        time.Duration
 	ChainID        uint8
@@ -55,6 +54,7 @@ type Replayer struct {
 
 // Breakpoint defines a break point.
 type Breakpoint struct {
+	AccountID        string `json:"account-id"`
 	NearcoreHead     string `json:"nearcore"`
 	AuroraEngineHead string `json:"aurora-engine"`
 	Transaction      string `json:"transaction"`
@@ -220,15 +220,15 @@ func (r *Replayer) Replay(evmContract string) error {
 		ca := CreateAccount{
 			Config:         r.Config,
 			InitialBalance: r.InitialBalance,
-			MasterAccount:  strings.Join(strings.Split(r.AccountID, ".")[1:], "."),
+			MasterAccount:  strings.Join(strings.Split(r.Breakpoint.AccountID, ".")[1:], "."),
 		}
-		if err := ca.Create(r.AccountID); err != nil {
+		if err := ca.Create(r.Breakpoint.AccountID); err != nil {
 			return err
 		}
 
 		// install EVM contract
 		log.Info("install EVM contract")
-		if err := aurora.Install(r.AccountID, r.Contract); err != nil {
+		if err := aurora.Install(r.Breakpoint.AccountID, r.Contract); err != nil {
 			return err
 		}
 
@@ -238,7 +238,7 @@ func (r *Replayer) Replay(evmContract string) error {
 
 	// load account
 	conn := near.NewConnectionWithTimeout(r.Config.NodeURL, r.Timeout)
-	a, err := near.LoadAccount(conn, r.Config, r.AccountID)
+	a, err := near.LoadAccount(conn, r.Config, r.Breakpoint.AccountID)
 	if err != nil {
 		return err
 	}
@@ -419,7 +419,7 @@ func (r *Replayer) SaveBreakpoint() error {
 	if err != nil {
 		return err
 	}
-	filename = r.AccountID + ".json"
+	filename = r.Breakpoint.AccountID + ".json"
 	path := filepath.Join(home, ".near-credentials", r.Config.NetworkID, filename)
 	if err := file.Copy(path, filepath.Join(dir, filename)); err != nil {
 		return err
