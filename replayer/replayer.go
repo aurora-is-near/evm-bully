@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aurora-is-near/evm-bully/replayer/neard"
+	"github.com/aurora-is-near/evm-bully/util/aurora"
 	"github.com/aurora-is-near/near-api-go"
 	"github.com/aurora-is-near/near-api-go/utils"
 	"github.com/ethereum/go-ethereum/common"
@@ -43,6 +44,7 @@ type Replayer struct {
 	Release        bool // run release version of neard
 	Setup          bool // setup and run neard before replaying
 	InitialBalance string
+	Contract       string
 }
 
 // traverse blockchain backwards starting at block b with given blockHeight
@@ -180,7 +182,19 @@ func (r *Replayer) Replay(evmContract string) error {
 
 	// setup, if necessary
 	if r.Setup {
+		// setup neard
+		log.Info("setup neard")
+		neard, err := neard.Setup(r.Release)
+		if err != nil {
+			return err
+		}
+		defer neard.Stop()
+
+		log.Info("sleep")
+		time.Sleep(5 * time.Second)
+
 		// create account
+		log.Info("create account")
 		ca := CreateAccount{
 			Config:         r.Config,
 			InitialBalance: r.InitialBalance,
@@ -190,12 +204,14 @@ func (r *Replayer) Replay(evmContract string) error {
 			return err
 		}
 
-		// setup neard
-		neard, err := neard.Setup(r.Release)
-		if err != nil {
+		// install EVM contract
+		log.Info("install EVM contract")
+		if err := aurora.Install(r.AccountID, r.Contract); err != nil {
 			return err
 		}
-		defer neard.Stop()
+
+		// reset
+		r.Config.KeyPath = ""
 	}
 
 	// load account

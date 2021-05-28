@@ -154,5 +154,5 @@ func Setup(release bool) (*NEARDaemon, error) {
 
 func (n *NEARDaemon) Stop() error {
 	log.Info("stop neard")
-	return n.nearDaemon.Process.Signal(os.Interrupt)
+	return n.nearDaemon.Process.Kill()
 }

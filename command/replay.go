@@ -27,6 +27,7 @@ func Replay(argv0 string, args ...string) error {
 	breakBlock := fs.Int("breakblock", 0, "Break replaying at this block height")
 	breakTx := fs.Int("breaktx", 0, "Break replaying at this transaction (in block given by -breakblock)")
 	block := fs.Uint64("block", defaultGoerliBlockHeight, "Block height to replay to")
+	contract := fs.String("contract", "", "EVM contract file to deploy")
 	dataDir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas a call can use (in gas units)")
@@ -64,6 +65,12 @@ func Replay(argv0 string, args ...string) error {
 	}
 	if *release && !*setup {
 		return errors.New("option -release requires option -setup")
+	}
+	if *setup && *contract == "" {
+		return errors.New("option -setup requires option -contract")
+	}
+	if !*setup && *contract != "" {
+		return errors.New("options -setup and -contract exclude each other")
 	}
 	chainID, testnet, err := testnetFlags.determineTestnet()
 	if err != nil {
@@ -122,6 +129,7 @@ func Replay(argv0 string, args ...string) error {
 		Release:        *release,
 		Setup:          *setup,
 		InitialBalance: *initialBalance,
+		Contract:       *contract,
 	}
 	return r.Replay(evmContract)
 }
