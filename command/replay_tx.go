@@ -18,6 +18,7 @@ func ReplayTx(argv0 string, args ...string) error {
 		fs.PrintDefaults()
 	}
 	build := fs.Bool("build", false, "Build nearcore and aurora-engine before replaying tx")
+	contract := fs.String("contract", "", "Upgrade EVM contract with file before replaying tx")
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas a call can use (in gas units)")
 	release := fs.Bool("release", false, "Run release version of neard")
 	cfg := near.GetConfig()
@@ -30,5 +31,5 @@ func ReplayTx(argv0 string, args ...string) error {
 		return flag.ErrHelp
 	}
 	breakpointDir := fs.Arg(0)
-	return replayer.ReplayTx(breakpointDir, *build, *release, *gas)
+	return replayer.ReplayTx(breakpointDir, *build, *contract, *release, *gas)
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/aurora-is-near/evm-bully/replayer/neard"
+	"github.com/aurora-is-near/evm-bully/util/aurora"
 	"github.com/aurora-is-near/evm-bully/util/git"
 	"github.com/aurora-is-near/evm-bully/util/gnumake"
 	"github.com/aurora-is-near/near-api-go"
@@ -73,7 +74,13 @@ func buildNearcore(head string, release bool) error {
 }
 
 // ReplayTx replays transaction from breakpointDir.
-func ReplayTx(breakpointDir string, build, release bool, gas uint64) error {
+func ReplayTx(
+	breakpointDir string,
+	build bool,
+	contract string,
+	release bool,
+	gas uint64,
+) error {
 	// parse breakpoint.json
 	filename := filepath.Join(breakpointDir, "breakpoint.json")
 	data, err := os.ReadFile(filename)
@@ -127,6 +134,13 @@ func ReplayTx(breakpointDir string, build, release bool, gas uint64) error {
 	err = file.Copy(filepath.Join(breakpointDir, bp.AccountID+".json"), dst)
 	if err != nil {
 		return err
+	}
+
+	// upgrade contract before replaying tx, if necessary
+	if contract != "" {
+		if err := aurora.Upgrade(bp.AccountID, contract); err != nil {
+			return err
+		}
 	}
 
 	// run transaction
