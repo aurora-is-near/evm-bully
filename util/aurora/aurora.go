@@ -6,7 +6,7 @@ import (
 	"os/exec"
 )
 
-// Install the contract file with accountID.
+// Install the EVM contract with given accountID owner.
 func Install(accountID, contract string) error {
 	cmd := exec.Command(
 		"aurora", "install",
@@ -19,4 +19,10 @@ func Install(accountID, contract string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+// Upgrade the EVM contract with given accountID owner.
+func Upgrade(accountID, contract string) error {
+	// `aurora upgrade` is an alias for `aurora install`
+	return Install(accountID, contract)
 }
