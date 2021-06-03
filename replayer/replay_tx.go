@@ -138,7 +138,8 @@ func ReplayTx(
 
 	// upgrade contract before replaying tx, if necessary
 	if contract != "" {
-		if err := aurora.Upgrade(bp.AccountID, contract); err != nil {
+		err := aurora.Upgrade(bp.AccountID, bp.ChainID, contract)
+		if err != nil {
 			return err
 		}
 	}

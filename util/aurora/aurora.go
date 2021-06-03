@@ -4,13 +4,14 @@ package aurora
 import (
 	"os"
 	"os/exec"
+	"strconv"
 )
 
-// Install the EVM contract with given accountID owner.
-func Install(accountID, contract string) error {
+// Install the EVM contract with given accountID owner and chainID.
+func Install(accountID string, chainID uint8, contract string) error {
 	cmd := exec.Command(
 		"aurora", "install",
-		"--chain", "1313161556",
+		"--chain", strconv.FormatUint(uint64(chainID), 10),
 		"--engine", accountID,
 		"--signer", accountID,
 		"--owner", accountID,
@@ -21,8 +22,8 @@ func Install(accountID, contract string) error {
 	return cmd.Run()
 }
 
-// Upgrade the EVM contract with given accountID owner.
-func Upgrade(accountID, contract string) error {
+// Upgrade the EVM contract with given accountID owner and ChainID.
+func Upgrade(accountID string, chainID uint8, contract string) error {
 	// `aurora upgrade` is an alias for `aurora install`
-	return Install(accountID, contract)
+	return Install(accountID, chainID, contract)
 }

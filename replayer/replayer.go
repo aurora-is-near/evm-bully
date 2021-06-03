@@ -54,6 +54,7 @@ type Replayer struct {
 
 // Breakpoint defines a break point.
 type Breakpoint struct {
+	ChainID          uint8  `json:"chain-id"`
 	AccountID        string `json:"account-id"`
 	NearcoreHead     string `json:"nearcore"`
 	AuroraEngineHead string `json:"aurora-engine"`
@@ -228,7 +229,8 @@ func (r *Replayer) Replay(evmContract string) error {
 
 		// install EVM contract
 		log.Info("install EVM contract")
-		if err := aurora.Install(r.Breakpoint.AccountID, r.Contract); err != nil {
+		err = aurora.Install(r.Breakpoint.AccountID, r.ChainID, r.Contract)
+		if err != nil {
 			return err
 		}
 
@@ -381,6 +383,9 @@ func (r *Replayer) SaveBreakpoint() error {
 	var err error
 	dir := fmt.Sprintf("%s-block-%d-tx-%d", r.Testnet, r.BreakBlock, r.BreakTx)
 	log.Info(fmt.Sprintf("save breakpoint %s", dir))
+
+	// set chainID
+	r.Breakpoint.ChainID = r.ChainID
 
 	// get HEAD of aurora-engine
 	r.Breakpoint.AuroraEngineHead, err = auroraEngineHead(r.Contract)
