@@ -6,6 +6,7 @@ import (
 	"os/exec"
 )
 
+// Install the contract file with accountID.
 func Install(accountID, contract string) error {
 	cmd := exec.Command(
 		"aurora", "install",

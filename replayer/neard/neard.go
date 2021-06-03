@@ -13,12 +13,13 @@ import (
 	"github.com/frankbraun/codechain/util/file"
 )
 
+// NEARDaemon wraps a running neard.
 type NEARDaemon struct {
 	Head       string
 	nearDaemon *exec.Cmd
 }
 
-// Buildbuilds neard in CWD.
+// Build builds neard in CWD.
 func Build(release bool) error {
 	args := []string{
 		"build",
@@ -87,6 +88,7 @@ func (n *NEARDaemon) start(release bool, localDir string) error {
 	return n.nearDaemon.Start()
 }
 
+// Setup initializes and starts a (release) NEARDaemon.
 func Setup(release bool) (*NEARDaemon, error) {
 	var n NEARDaemon
 	log.Info("setup neard")
@@ -153,6 +155,7 @@ func Setup(release bool) (*NEARDaemon, error) {
 	return &n, nil
 }
 
+// Start starts a (release) NEARDaemon.
 func Start(release bool) (*NEARDaemon, error) {
 	var n NEARDaemon
 	log.Info("start neard")
@@ -182,6 +185,7 @@ func Start(release bool) (*NEARDaemon, error) {
 	return &n, nil
 }
 
+// Stop NEARDaemon.
 func (n *NEARDaemon) Stop() error {
 	log.Info("stop neard")
 	return n.nearDaemon.Process.Kill()
