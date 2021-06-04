@@ -15,7 +15,6 @@ import (
 
 	"github.com/aurora-is-near/evm-bully/replayer/neard"
 	"github.com/aurora-is-near/evm-bully/util/aurora"
-	"github.com/aurora-is-near/evm-bully/util/git"
 	"github.com/aurora-is-near/evm-bully/util/tar"
 	"github.com/aurora-is-near/near-api-go"
 	"github.com/aurora-is-near/near-api-go/utils"
@@ -411,30 +410,6 @@ func procTxResult(batch bool, tx *types.Transaction, txResult map[string]interfa
 		return errors.New("replayer: transaction failed")
 	}
 	return nil
-}
-
-func auroraEngineHead(contract string) (string, error) {
-	// get cwd
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	fmt.Println(cwd)
-	// switch to aurora-engine directory
-	if err := os.Chdir(filepath.Dir(contract)); err != nil {
-		return "", err
-	}
-	// get current HEAD
-	head, err := git.Head()
-	if err != nil {
-		return "", err
-	}
-	log.Info(fmt.Sprintf("head=%s", head))
-	// switch back to original directory
-	if err := os.Chdir(cwd); err != nil {
-		return "", err
-	}
-	return head, nil
 }
 
 // saveBreakpoint saves replayer break point for evmContract.
