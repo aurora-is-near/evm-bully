@@ -216,14 +216,14 @@ func (r *Replayer) replay(
 	db ethdb.Database,
 	blocks []common.Hash,
 	evmContract string,
-) (blockNum int, txNum int, err error) {
+) (blockNum int, txNum int, errormsg []byte, err error) {
 	// setup, if necessary
 	if r.Setup {
 		// setup neard
 		log.Info("setup neard")
 		neard, err := neard.Setup(r.Release)
 		if err != nil {
-			return -1, -1, err
+			return -1, -1, nil, err
 		}
 		defer neard.Stop()
 		r.Breakpoint.NearcoreHead = neard.Head
@@ -239,14 +239,14 @@ func (r *Replayer) replay(
 			MasterAccount:  strings.Join(strings.Split(r.Breakpoint.AccountID, ".")[1:], "."),
 		}
 		if err := ca.Create(r.Breakpoint.AccountID); err != nil {
-			return -1, -1, err
+			return -1, -1, nil, err
 		}
 
 		// install EVM contract
 		log.Info("install EVM contract")
 		err = aurora.Install(r.Breakpoint.AccountID, r.ChainID, r.Contract)
 		if err != nil {
-			return -1, -1, err
+			return -1, -1, nil, err
 		}
 
 		// reset key path
@@ -257,7 +257,7 @@ func (r *Replayer) replay(
 	conn := near.NewConnectionWithTimeout(r.Config.NodeURL, r.Timeout)
 	a, err := near.LoadAccount(conn, r.Config, r.Breakpoint.AccountID)
 	if err != nil {
-		return -1, -1, err
+		return -1, -1, nil, err
 	}
 
 	// process transactions
@@ -266,7 +266,7 @@ func (r *Replayer) replay(
 	c := r.startTxGenerator(a, evmContract, db, blocks)
 	for tx := range c {
 		if tx.Error != nil {
-			return -1, -1, tx.Error
+			return -1, -1, nil, tx.Error
 		}
 		if tx.MethodName != "" {
 			var (
@@ -280,7 +280,7 @@ func (r *Replayer) replay(
 				}
 				txResult, err = a.FunctionCall(evmContract, tx.MethodName, tx.Args, r.Gas, *zeroAmount)
 				if err != nil {
-					return -1, -1, err
+					return -1, -1, nil, err
 				}
 			} else {
 				// batch mode
@@ -300,15 +300,15 @@ func (r *Replayer) replay(
 					fmt.Println("running batch")
 					txResult, err = a.SignAndSendTransaction(evmContract, batch)
 					if err != nil {
-						return -1, -1, err
+						return -1, -1, nil, err
 					}
 					batch = batch[:0] // reset
 				} else {
 					continue // batch no full yet
 				}
 			}
-			if err := procTxResult(r.Batch, tx.EthTx, txResult); err != nil {
-				return tx.BlockNum, tx.TxNum, err
+			if errormsg, err := procTxResult(r.Batch, tx.EthTx, txResult); err != nil {
+				return tx.BlockNum, tx.TxNum, errormsg, err
 			}
 		} else if tx.Comment != "" {
 			fmt.Println(tx.Comment)
@@ -320,13 +320,13 @@ func (r *Replayer) replay(
 		fmt.Println("running last batch")
 		txResult, err := a.SignAndSendTransaction(evmContract, batch)
 		if err != nil {
-			return -1, -1, err
+			return -1, -1, nil, err
 		}
-		if err := procTxResult(r.Batch, nil, txResult); err != nil {
-			return -1, -1, err
+		if errormsg, err := procTxResult(r.Batch, nil, txResult); err != nil {
+			return -1, -1, errormsg, err
 		}
 	}
-	return -1, -1, nil
+	return -1, -1, nil, nil
 }
 
 // Replay transactions with evmContract.
@@ -349,7 +349,12 @@ func (r *Replayer) Replay(evmContract string) error {
 	}()
 
 	keyPath := r.Config.KeyPath
-	blockNum, txNum, err := r.replay(db, blocks, evmContract)
+	var (
+		blockNum int
+		txNum    int
+		errormsg []byte
+	)
+	blockNum, txNum, errormsg, err = r.replay(db, blocks, evmContract)
 	if err != nil {
 		if r.Autobreak && blockNum != -1 {
 			// restore key path
@@ -358,7 +363,7 @@ func (r *Replayer) Replay(evmContract string) error {
 			r.BreakBlock = blockNum
 			r.BreakTx = txNum
 			log.Info("replay again with breakpoint set")
-			if _, _, err := r.replay(db, blocks, evmContract); err != nil {
+			if _, _, _, err := r.replay(db, blocks, evmContract); err != nil {
 				return err
 			}
 		} else {
@@ -367,7 +372,7 @@ func (r *Replayer) Replay(evmContract string) error {
 	}
 
 	if r.BreakBlock != 0 {
-		return r.saveBreakpoint()
+		return r.saveBreakpoint(errormsg)
 	}
 	return nil
 }
@@ -394,12 +399,16 @@ func showTx(tx *types.Transaction) {
 	}
 }
 
-func procTxResult(batch bool, tx *types.Transaction, txResult map[string]interface{}) error {
+func procTxResult(
+	batch bool,
+	tx *types.Transaction,
+	txResult map[string]interface{},
+) ([]byte, error) {
 	utils.PrettyPrintResponse(txResult)
 	status := txResult["status"].(map[string]interface{})
 	jsn, err := json.MarshalIndent(status, "", "  ")
 	if err != nil {
-		return err
+		return nil, err
 	}
 	fmt.Println(string(jsn))
 	if status["Failure"] != nil {
@@ -407,13 +416,13 @@ func procTxResult(batch bool, tx *types.Transaction, txResult map[string]interfa
 			// print last failing transaction if possible
 			showTx(tx)
 		}
-		return errors.New("replayer: transaction failed")
+		return jsn, errors.New("replayer: transaction failed")
 	}
-	return nil
+	return nil, nil
 }
 
 // saveBreakpoint saves replayer break point for evmContract.
-func (r *Replayer) saveBreakpoint() error {
+func (r *Replayer) saveBreakpoint(errormsg []byte) error {
 	var err error
 	dir := fmt.Sprintf("%s-block-%d-tx-%d", r.Testnet, r.BreakBlock, r.BreakTx)
 	log.Info(fmt.Sprintf("save breakpoint %s", dir))
@@ -452,6 +461,15 @@ func (r *Replayer) saveBreakpoint() error {
 		return err
 	}
 	log.Info(fmt.Sprintf("'%s' written", filename))
+
+	// write error message, if defined (-autobreak was used)
+	if errormsg != nil {
+		filename := filepath.Join(dir, "errormsg.json")
+		if err := os.WriteFile(filename, errormsg, 0644); err != nil {
+			return err
+		}
+		log.Info(fmt.Sprintf("'%s' written", filename))
+	}
 
 	// copy key file
 	home, err := os.UserHomeDir()
