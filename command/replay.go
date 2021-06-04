@@ -21,6 +21,7 @@ func Replay(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "Replay transactions to NEAR EVM.\n")
 		fs.PrintDefaults()
 	}
+	autobreak := fs.Bool("autobreak", false, "Automatically repeat with break point after error")
 	accountID := fs.String("accountId", "", "Unique identifier for the account that will be used to sign this call")
 	batch := fs.Bool("batch", false, "Batch transactions")
 	batchSize := fs.Int("size", 10, "Batch size when batching transactions")
@@ -50,6 +51,18 @@ func Replay(argv0 string, args ...string) error {
 	}
 	if !*setup && *accountID == "" {
 		return errors.New("option -accountId is mandatory")
+	}
+	if *autobreak && *breakBlock != 0 {
+		return errors.New("options -autobreak and -breakblock exclude each other")
+	}
+	if *autobreak && *breakTx != 0 {
+		return errors.New("options -autobreak and -breaktx exclude each other")
+	}
+	if *autobreak && *startBlock != 0 {
+		return errors.New("options -autobreak and -startblock exclude each other")
+	}
+	if *autobreak && *startTx != 0 {
+		return errors.New("options -autobreak and -starttx exclude each other")
 	}
 	if *startBlock != 0 && *breakBlock != 0 {
 		return errors.New("options -startblock and -breakblock exclude each other")
@@ -123,6 +136,7 @@ func Replay(argv0 string, args ...string) error {
 		BatchSize:      *batchSize,
 		StartBlock:     *startBlock,
 		StartTx:        *startTx,
+		Autobreak:      *autobreak,
 		BreakBlock:     *breakBlock,
 		BreakTx:        *breakTx,
 		Release:        *release,
@@ -135,9 +149,6 @@ func Replay(argv0 string, args ...string) error {
 	}
 	if err := r.Replay(evmContract); err != nil {
 		return err
-	}
-	if *breakBlock != 0 {
-		return r.SaveBreakpoint()
 	}
 	return nil
 }

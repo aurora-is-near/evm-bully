@@ -9,4 +9,4 @@ fi
 env NEAR_ENV=local evm-bully -v replay \
                    -initial-balance 1000 \
                    -keyPath $HOME/.near/local/validator_key.json \
-                   -setup -skip $1 -contract $2
+                   -autobreak -setup -skip $1 -contract $2

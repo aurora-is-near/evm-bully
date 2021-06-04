@@ -6,6 +6,8 @@ import (
 
 // Tx defines a replayer transaction.
 type Tx struct {
+	BlockNum   int                // block number (-1 if undefined)
+	TxNum      int                // transaction number
 	Comment    string             // comment for the transaction
 	MethodName string             // the Aurora Engine method name to call
 	Args       []byte             // the argument to call the method with
