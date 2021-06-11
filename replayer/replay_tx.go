@@ -127,7 +127,11 @@ func ReplayTx(
 	time.Sleep(5 * time.Second)
 
 	// copy credentials file
-	dst := filepath.Join(home, ".near-credentials", "local", bp.AccountID+".json")
+	credDir := filepath.Join(home, ".near-credentials", "local")
+	if err := os.MkdirAll(credDir, 0700); err != nil {
+		return err
+	}
+	dst := filepath.Join(credDir, bp.AccountID+".json")
 	if err := os.RemoveAll(dst); err != nil {
 		return err
 	}
