@@ -28,6 +28,9 @@ Example:
     evm-bully replay-tx rinkeby-block-55-tx-0
 
 This automatically starts the debug version of `neard` in `../nearcore`.
+For verbose output pass the global flag `-v` to the `evm-bully` binary:
+
+    evm-bully -v replay-tx rinkeby-block-55-tx-0
 
 ### Options
 
