@@ -25,7 +25,7 @@ func Replay(argv0 string, args ...string) error {
 	accountID := fs.String("accountId", "", "Unique identifier for the account that will be used to sign this call")
 	batch := fs.Bool("batch", false, "Batch transactions")
 	batchSize := fs.Int("size", 10, "Batch size when batching transactions")
-	breakBlock := fs.Int("breakblock", 0, "Break replaying at this block height")
+	breakBlock := fs.Int("breakblock", -1, "Break replaying at this block height")
 	breakTx := fs.Int("breaktx", 0, "Break replaying at this transaction (in block given by -breakblock)")
 	block := fs.Uint64("block", defaultGoerliBlockHeight, "Block height to replay to")
 	contract := fs.String("contract", "", "EVM contract file to deploy")
@@ -52,7 +52,7 @@ func Replay(argv0 string, args ...string) error {
 	if !*setup && *accountID == "" {
 		return errors.New("option -accountId is mandatory")
 	}
-	if *autobreak && *breakBlock != 0 {
+	if *autobreak && *breakBlock != -1 {
 		return errors.New("options -autobreak and -breakblock exclude each other")
 	}
 	if *autobreak && *breakTx != 0 {
@@ -64,13 +64,13 @@ func Replay(argv0 string, args ...string) error {
 	if *autobreak && *startTx != 0 {
 		return errors.New("options -autobreak and -starttx exclude each other")
 	}
-	if *startBlock != 0 && *breakBlock != 0 {
+	if *startBlock != 0 && *breakBlock != -1 {
 		return errors.New("options -startblock and -breakblock exclude each other")
 	}
 	if *startBlock != 0 && *breakTx != 0 {
 		return errors.New("options -startblock and -breaktx exclude each other")
 	}
-	if *startTx != 0 && *breakBlock != 0 {
+	if *startTx != 0 && *breakBlock != -1 {
 		return errors.New("options -starttx and -breakblock exclude each other")
 	}
 	if *startTx != 0 && *breakTx != 0 {

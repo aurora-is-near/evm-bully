@@ -129,14 +129,17 @@ func (r *Replayer) startTxGenerator(
 			}
 
 			// early break, if necessary
-			if r.BreakBlock != 0 && r.BreakTx == 0 && blockHeight == r.BreakBlock {
+			if r.BreakBlock != -1 && r.BreakTx == 0 && blockHeight == r.BreakBlock {
 				c <- &Tx{
 					BlockNum: -1,
 					Comment:  fmt.Sprintf("breaking block %d", blockHeight),
 				}
 				log.Info("sleep")
 				time.Sleep(5 * time.Second)
-				r.Breakpoint.tx = b.Transactions()[0]
+				txs := b.Transactions()
+				if txs != nil && len(txs) > 0 {
+					r.Breakpoint.tx = txs[0]
+				}
 				break
 			}
 
@@ -161,7 +164,7 @@ func (r *Replayer) startTxGenerator(
 			// actual transactions
 			for i, tx := range b.Transactions() {
 				// early break, if necessary
-				if r.BreakBlock != 0 && blockHeight == r.BreakBlock && i == r.BreakTx {
+				if r.BreakBlock != -1 && blockHeight == r.BreakBlock && i == r.BreakTx {
 					c <- &Tx{
 						BlockNum: -1,
 						Comment:  fmt.Sprintf("breaking at transaction %d (in block %d)", i, blockHeight),
@@ -371,7 +374,7 @@ func (r *Replayer) Replay(evmContract string) error {
 		}
 	}
 
-	if r.BreakBlock != 0 {
+	if r.BreakBlock != -1 {
 		return r.saveBreakpoint(errormsg)
 	}
 	return nil
@@ -437,11 +440,13 @@ func (r *Replayer) saveBreakpoint(errormsg []byte) error {
 	}
 
 	// encode transaction
-	rlp, err := r.Breakpoint.tx.MarshalBinary()
-	if err != nil {
-		return err
+	if r.Breakpoint.tx != nil {
+		rlp, err := r.Breakpoint.tx.MarshalBinary()
+		if err != nil {
+			return err
+		}
+		r.Breakpoint.Transaction = hex.EncodeToString(rlp)
 	}
-	r.Breakpoint.Transaction = hex.EncodeToString(rlp)
 
 	// remove output dir
 	if err := os.RemoveAll(dir); err != nil {
