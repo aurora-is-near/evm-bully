@@ -54,10 +54,7 @@ func bigIntToRawU256(b *big.Int) (RawU256, error) {
 			fmt.Errorf("replayer: big.Int cannot be represented as RawU256: %s",
 				b.String())
 	}
-	// convert big-endian to little-endian
-	for i, j := 0, len(bytes)-1; i < j; i, j = i+1, j-1 {
-		bytes[i], bytes[j] = bytes[j], bytes[i]
-	}
+	// the encoding is already big-endian
 	copy(res[:], bytes[:])
 	return res, nil
 }
