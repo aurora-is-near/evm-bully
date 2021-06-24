@@ -5,18 +5,23 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
+
+	"github.com/ethereum/go-ethereum/log"
 )
 
 // Install the EVM contract with given accountID owner and chainID.
 func Install(accountID string, chainID uint8, contract string) error {
-	cmd := exec.Command(
-		"aurora", "install",
+	args := []string{
+		"install",
 		"--chain", strconv.FormatUint(uint64(chainID), 10),
 		"--engine", accountID,
 		"--signer", accountID,
 		"--owner", accountID,
 		contract,
-	)
+	}
+	log.Info("$ aurora " + strings.Join(args, " "))
+	cmd := exec.Command("aurora", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
