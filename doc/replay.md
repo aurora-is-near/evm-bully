@@ -3,16 +3,14 @@
 See [server setup](server.md) for the generic server setup and [replay
 transactions](replay-tx.md) on how to replay failing transactions.
 
-It is assumed that the `evm-bully` is run out of the `evm-bully` repository
-directory and that it is located "parallel" to the `nearcore` and
-`aurora-engine` repositories:
+It is assumed that the `evm-bully` is run out of the `evm-bully`
+repository directory and that it is located "parallel" to the `nearcore`
+and `aurora-engine` repositories:
 
-```
-.
-├── aurora-engine
-├── evm-bully
-└── nearcore
-```
+    .
+    ├── aurora-engine
+    ├── evm-bully
+    └── nearcore
 
 ### Install `evm-bully`
 

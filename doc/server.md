@@ -14,7 +14,8 @@ Follow instructions that appear after that command, then:
 
     rustup target add wasm32-unknown-unknown
 
-**Note**: this custom target is not strictly needed for running a nearcore node, but is needed for building smart contracts in Rust.
+**Note**: this custom target is not strictly needed for running a
+nearcore node, but is needed for building smart contracts in Rust.
 
 ### Set up NEAR node
 
@@ -26,7 +27,8 @@ Navigate to the project root:
 
     cd nearcore
 
-Build (this will take a while, feel free to move on to future steps while this is happening):
+Build (this will take a while, feel free to move on to future steps
+while this is happening):
 
     cargo build -p neard --release --features protocol_feature_evm,nightly_protocol_features
 
@@ -38,7 +40,9 @@ Then run:
 
     ./target/release/neard --home=$HOME/.near/local run
 
-**Note**: hit Ctrl + C to stop the local node. If you want to pick up where you left off, just use this final "run" command again. If you'd like to start from scratch, remove the folder:
+**Note**: hit Ctrl + C to stop the local node. If you want to pick up
+where you left off, just use this final "run" command again. If you'd
+like to start from scratch, remove the folder:
 
     rm -rf ~/.near/local
 
@@ -51,7 +55,6 @@ and then use the "initialize" and "run" commands.
     sudo apt install -y nodejs
     sudo npm install -g near-cli
     sudo npm install -g aurora-is-near/aurora-cli
-
 
 ### Install Go
 
