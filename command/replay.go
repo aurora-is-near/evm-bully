@@ -21,7 +21,7 @@ func Replay(argv0 string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "Replay transactions to NEAR EVM installed in account <evmContract>.\n")
 		fs.PrintDefaults()
 	}
-	autobreak := fs.Bool("autobreak", false, "Automatically repeat with break point after error")
+	autobreak := fs.Bool("autobreak", false, "Automatically repeat with a break point after an error")
 	accountID := fs.String("accountId", "", "Unique identifier for the account that will be used to sign this call")
 	batch := fs.Bool("batch", false, "Batch transactions")
 	batchSize := fs.Int("size", 10, "Batch size when batching transactions")
@@ -34,8 +34,8 @@ func Replay(argv0 string, args ...string) error {
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas a call can use (in gas units)")
 	hash := fs.String("hash", defaultGoerliBlockHash, "Block hash to replay to")
 	initialBalance := fs.String("initial-balance", defaultInitialBalance, "Number of tokens to transfer to newly created account")
-	release := fs.Bool("release", false, "Run release version of neard")
-	setup := fs.Bool("setup", false, "Setup and run neard before replaying")
+	release := fs.Bool("release", false, "Run release version of neard (instead of debug version)")
+	setup := fs.Bool("setup", false, "Setup and run neard before replaying (auto-deploys contract)")
 	skip := fs.Bool("skip", false, "Skip empty blocks")
 	startBlock := fs.Int("startblock", 0, "Start replaying at this block height")
 	startTx := fs.Int("starttx", 0, "Start replaying at this transaction (in block given by -startblock)")
@@ -82,8 +82,8 @@ func Replay(argv0 string, args ...string) error {
 	if *setup && *contract == "" {
 		return errors.New("option -setup requires option -contract")
 	}
-	if !*setup && *contract != "" {
-		return errors.New("options -setup and -contract exclude each other")
+	if *contract != "" && !*setup {
+		return errors.New("option -contract requires option -setup")
 	}
 	chainID, testnet, err := testnetFlags.determineTestnet()
 	if err != nil {

@@ -28,15 +28,34 @@ Replaying transactions requires that the corresponding Ethereum testnet
 is synched, see [synching testnets](server.md#synching-testnets).
 
 In order to run `evm-bully replay` we either need to manually create a
-NEAR account and install the EVM contract to it or let the `evm-bully`
-do what with the options `-setup` and `-contract`. We use the latter
+NEAR account and install the EVM contract to it (see
+[`test_local.sh`](../scripts/test_local.sh)) or let the `evm-bully` do
+what with the options `-setup` and `-contract`. We use the latter
 approach by employing the wrapper script
 [`test_local_setup.sh`](../scripts/test_local_setup.sh):
 
 Example:
 
-    scripts/test_local_setup -goerli ../aurora-engine/release.wasm
+    ./scripts/test_local_setup.sh -goerli ../aurora-engine/release.wasm
 
 ### Options
+
+-   Use `-autobreak` to automatically repeat with a break point after an
+    error.
+-   Use `-contract` to set the EVM contract file to deploy. Requires
+    option `-setup`.
+-   Use `-release` to run release version of neard (instead of debug
+    version).
+-   Use `-setup` to setup and run neard before replaying (auto-deploys
+    contract). Requires option `-contract`. See [setup
+    option](#setup-option) for details.
+
+#### Testnet options
+
+-   Use `-goerli` to use the Görli testnet.
+-   Use `-rinkeby` to use the Rinkeby testnet.
+-   Use `-ropsten` to use the Ropsten testnet.
+
+### Setup option.
 
 TODO
