@@ -64,7 +64,7 @@ See https://golang.org/doc/install
 
 See https://github.com/ethereum/go-ethereum
 
-Fast sync testnets:
+### Synching testnets
 
     geth --ropsten --verbosity=2 --vmodule core=3
     geth --rinkeby --verbosity=2 --vmodule core=3 --port 30304
