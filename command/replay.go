@@ -17,8 +17,8 @@ func Replay(argv0 string, args ...string) error {
 	var testnetFlags testnetFlags
 	fs := flag.NewFlagSet(argv0, flag.ContinueOnError)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s <evmContract>\n", argv0)
-		fmt.Fprintf(os.Stderr, "Replay transactions to NEAR EVM.\n")
+		fmt.Fprintf(os.Stderr, "Usage: %s [<evmContract>]\n", argv0)
+		fmt.Fprintf(os.Stderr, "Replay transactions to NEAR EVM installed in account <evmContract>.\n")
 		fs.PrintDefaults()
 	}
 	autobreak := fs.Bool("autobreak", false, "Automatically repeat with break point after error")
