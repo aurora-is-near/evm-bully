@@ -44,11 +44,15 @@ Example:
     error. Leads to a [replayable](replay-tx.md) problem `.tar.gz` file.
 -   Use `-contract` to set the EVM contract file to deploy. Requires
     option `-setup`.
+-   Use `-initial-balance` to set the number of tokens to transfer to
+    newly created account. Requires option `-setup`.
+-   Use `-keyPath` to set the path to master account key.
 -   Use `-release` to run release version of neard (instead of debug
     version).
 -   Use `-setup` to setup and run neard before replaying (auto-deploys
     contract). Requires option `-contract`. See [setup
     option](#setup-option) for details.
+-   Use `-skip` to skip empty blocks during replay.
 
 #### Testnet options
 

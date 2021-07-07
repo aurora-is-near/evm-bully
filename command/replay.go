@@ -36,7 +36,7 @@ func Replay(argv0 string, args ...string) error {
 	initialBalance := fs.String("initial-balance", defaultInitialBalance, "Number of tokens to transfer to newly created account")
 	release := fs.Bool("release", false, "Run release version of neard (instead of debug version)")
 	setup := fs.Bool("setup", false, "Setup and run neard before replaying (auto-deploys contract)")
-	skip := fs.Bool("skip", false, "Skip empty blocks")
+	skip := fs.Bool("skip", false, "Skip empty blocks during replay")
 	startBlock := fs.Int("startblock", 0, "Start replaying at this block height")
 	startTx := fs.Int("starttx", 0, "Start replaying at this transaction (in block given by -startblock)")
 	timeout := fs.Duration("timeout", 0, "Timeout for JSON-RPC client")
