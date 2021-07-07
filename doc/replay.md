@@ -18,4 +18,25 @@ repositories:
 
 Run `make` in the `evm-bully` directory.
 
+### Compile Aurora Engine
+
+Run `make evm-bully=yes` in `aurora-engine` directory.
+
+### Replay transactions
+
+Replaying transactions requires that the corresponding Ethereum testnet
+is synched, see [synching testnets](server.md#synching-testnets).
+
+In order to run `evm-bully replay` we either need to manually create a
+NEAR account and install the EVM contract to it or let the `evm-bully`
+do what with the options `-setup` and `-contract`. We use the latter
+approach by employing the wrapper script
+[`test_local_setup.sh`](../scripts/test_local_setup.sh):
+
+Example:
+
+    scripts/test_local_setup -goerli ../aurora-engine/release.wasm
+
+### Options
+
 TODO
