@@ -14,3 +14,5 @@ to your `$PATH`.)
 ### Documentation
 
 -   [Server setup](doc/server.md)
+-   [Replaying an Ethereum testnet](doc/replay.md)
+-   [Replay failing transactions](doc/replay-tx.md)
