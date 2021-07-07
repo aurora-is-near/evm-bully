@@ -41,7 +41,7 @@ Example:
 ### Options
 
 -   Use `-autobreak` to automatically repeat with a break point after an
-    error.
+    error. Leads to a [replayable](replay-tx.md) problem `.tar.gz` file.
 -   Use `-contract` to set the EVM contract file to deploy. Requires
     option `-setup`.
 -   Use `-release` to run release version of neard (instead of debug
@@ -56,6 +56,20 @@ Example:
 -   Use `-rinkeby` to use the Rinkeby testnet.
 -   Use `-ropsten` to use the Ropsten testnet.
 
-### Setup option.
+### Setup option
 
-TODO
+Using the options `-setup` and `-contract` automatically starts `neard`
+and deploys the EVM contract before replaying transactions. The
+following steps are executed:
+
+-   Switch to the `nearcore` directory, compile the current `HEAD`, and
+    start `neard`.
+-   Create a NEAR account, using the optional argument supplied to
+    `evm-bully replay` as the account name. If no argument has been
+    given the account name is automatically generated.
+-   Installing the EVM contract supplied to `-contract` under the
+    created contract by calling out to
+    [`aurora-cli`](https://github.com/aurora-is-near/aurora-cli).
+
+Afterwards the transactions from the supplied testnet are replayed until
+an error occurs.
