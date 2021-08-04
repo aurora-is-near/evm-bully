@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/aurora-is-near/near-api-go"
 	"github.com/near/borsh-go"
 )
 
@@ -18,12 +17,7 @@ type BeginBlockArgs struct {
 	Gaslimit   RawU256
 }
 
-func beginBlockTx(
-	a *near.Account,
-	evmContract string,
-	gas uint64,
-	c *blockContext,
-) *Tx {
+func beginBlockTx(gas uint64, c *blockContext) *Tx {
 	var args BeginBlockArgs
 	copy(args.Hash[:], c.hash[:])
 	copy(args.Coinbase[:], c.coinbase[:])

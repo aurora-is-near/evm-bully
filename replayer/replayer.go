@@ -96,8 +96,6 @@ func traverse(
 
 // startGenerator starts a goroutine that feeds transactions into the returned tx channel.
 func (r *Replayer) startTxGenerator(
-	a *near.Account,
-	evmContract string,
 	db ethdb.Database,
 	blocks []common.Hash,
 ) chan *Tx {
@@ -106,7 +104,7 @@ func (r *Replayer) startTxGenerator(
 	go func() {
 		// process genesis block
 		genesisBlock := getGenesisBlock(r.Testnet)
-		c <- r.beginChainTx(a, evmContract, genesisBlock)
+		c <- r.beginChainTx(genesisBlock)
 
 	outer:
 		for blockHeight, blockHash := range blocks {
@@ -153,7 +151,7 @@ func (r *Replayer) startTxGenerator(
 				return
 			}
 			if !r.Skip || len(b.Transactions()) > 0 {
-				c <- beginBlockTx(a, evmContract, r.Gas, ctx)
+				c <- beginBlockTx(r.Gas, ctx)
 			} else {
 				c <- &Tx{
 					BlockNum: -1,
@@ -266,7 +264,7 @@ func (r *Replayer) replay(
 	// process transactions
 	batch := make([]near.Action, 0, r.BatchSize)
 	zeroAmount := big.NewInt(0)
-	c := r.startTxGenerator(a, evmContract, db, blocks)
+	c := r.startTxGenerator(db, blocks)
 	for tx := range c {
 		if tx.Error != nil {
 			return -1, -1, nil, tx.Error
