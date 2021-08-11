@@ -8,7 +8,6 @@ import (
 
 	"github.com/aurora-is-near/evm-bully/util/git"
 	"github.com/ethereum/go-ethereum/log"
-	"github.com/frankbraun/codechain/util/homedir"
 )
 
 func auroraEngineHead(contract string) (string, error) {
@@ -57,14 +56,4 @@ func bigIntToRawU256(b *big.Int) (RawU256, error) {
 	// the encoding is already big-endian
 	copy(res[:], bytes[:])
 	return res, nil
-}
-
-func determineCacheDir(testnet string) (string, error) {
-	homeDir := homedir.Get("evm-bully")
-	cacheDir := filepath.Join(homeDir, testnet)
-	// make sure cache directory exists
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		return "", err
-	}
-	return cacheDir, nil
 }

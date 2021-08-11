@@ -13,7 +13,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/aurora-is-near/evm-bully/db"
 	"github.com/aurora-is-near/evm-bully/replayer/neard"
+	"github.com/aurora-is-near/evm-bully/util"
 	"github.com/aurora-is-near/evm-bully/util/aurora"
 	"github.com/aurora-is-near/evm-bully/util/tar"
 	"github.com/aurora-is-near/near-api-go"
@@ -333,13 +335,13 @@ func (r *Replayer) replay(
 // Replay transactions with evmContract.
 func (r *Replayer) Replay(evmContract string) error {
 	// determine cache directory
-	cacheDir, err := determineCacheDir(r.Testnet)
+	cacheDir, err := util.DetermineCacheDir(r.Testnet)
 	if err != nil {
 		return err
 	}
 
 	// open database
-	db, blocks, err := openDB(r.DataDir, r.Testnet, cacheDir, r.BlockHeight,
+	db, blocks, err := db.Open(r.DataDir, r.Testnet, cacheDir, r.BlockHeight,
 		r.BlockHash, r.Defrost)
 	if err != nil {
 		return err

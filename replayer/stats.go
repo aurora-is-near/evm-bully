@@ -3,6 +3,8 @@ package replayer
 import (
 	"fmt"
 
+	"github.com/aurora-is-near/evm-bully/db"
+	"github.com/aurora-is-near/evm-bully/util"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -57,12 +59,12 @@ func CalcStats(
 	defrost bool,
 ) error {
 	// determine cache directory
-	cacheDir, err := determineCacheDir(testnet)
+	cacheDir, err := util.DetermineCacheDir(testnet)
 	if err != nil {
 		return err
 	}
 	// open database
-	db, blocks, err := openDB(dataDir, testnet, cacheDir, blockHeight,
+	db, blocks, err := db.Open(dataDir, testnet, cacheDir, blockHeight,
 		blockHash, defrost)
 	if err != nil {
 		return err

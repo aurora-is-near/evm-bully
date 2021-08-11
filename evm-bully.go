@@ -21,6 +21,7 @@ func fatal(err error) {
 func usage() {
 	cmd := os.Args[0] + " [-v]"
 	fmt.Fprintf(os.Stderr, "Usage: %s genesis\n", cmd)
+	fmt.Fprintf(os.Stderr, "       %s dumpdb\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s replay <evmContract>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s replay-tx <breakpointDir>\n", cmd)
 	fmt.Fprintf(os.Stderr, "       %s create-account <accountId>\n", cmd)
@@ -61,6 +62,8 @@ func main() {
 	switch flag.Arg(0) {
 	case "genesis":
 		err = command.Genesis(argv0, args...)
+	case "dumpdb":
+		err = command.DumpDB(argv0, args...)
 	case "replay":
 		err = command.Replay(argv0, args...)
 	case "replay-tx":
