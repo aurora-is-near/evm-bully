@@ -183,7 +183,10 @@ func Dump(
 	if err != nil {
 		return err
 	}
-	defer fp.Close()
+	defer func() {
+		fp.Close()
+		log.Info(fmt.Sprintf("'%s' written", dumpFile))
+	}()
 	w := gzip.NewWriter(fp)
 	enc := gob.NewEncoder(w)
 
