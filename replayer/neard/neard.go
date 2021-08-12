@@ -24,7 +24,7 @@ func Build(release bool) error {
 	args := []string{
 		"build",
 		"--package", "neard",
-		"--features", "protocol_feature_evm,nightly_protocol_features",
+		"--features", "nightly_protocol_features",
 	}
 	if release {
 		args = append(args, "--release")
