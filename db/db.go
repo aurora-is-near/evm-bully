@@ -2,7 +2,6 @@
 package db
 
 import (
-	"compress/gzip"
 	"encoding/gob"
 	"fmt"
 	"io"
@@ -163,7 +162,7 @@ func Dump(
 	}
 
 	// check dump file
-	dumpFile := filepath.Join(cacheDir, "dump.gz")
+	dumpFile := filepath.Join(cacheDir, "dump.db")
 	exists, err := file.Exists(dumpFile)
 	if err != nil {
 		return err
@@ -192,12 +191,14 @@ func Dump(
 		fp.Close()
 		log.Info(fmt.Sprintf("'%s' written", dumpFile))
 	}()
-	gw := gzip.NewWriter(fp)
-	defer func() {
-		gw.Close()
-		log.Info("gzip writer closed")
-	}()
-	enc := gob.NewEncoder(gw)
+	/*
+		gw := gzip.NewWriter(fp)
+		defer func() {
+			gw.Close()
+			log.Info("gzip writer closed")
+		}()
+	*/
+	enc := gob.NewEncoder(fp)
 
 	// read DB
 	for blockHeight, blockHash := range blocks {
@@ -245,7 +246,7 @@ func NewReader(testnet string) (*Reader, error) {
 	}
 
 	// check dump file
-	dumpFile := filepath.Join(cacheDir, "dump.gz")
+	dumpFile := filepath.Join(cacheDir, "dump.db")
 	exists, err := file.Exists(dumpFile)
 	if err != nil {
 		return nil, err
@@ -260,11 +261,13 @@ func NewReader(testnet string) (*Reader, error) {
 	if err != nil {
 		return nil, err
 	}
-	gr, err := gzip.NewReader(r.fp)
-	if err != nil {
-		return nil, err
-	}
-	r.dec = gob.NewDecoder(gr)
+	/*
+		gr, err := gzip.NewReader(r.fp)
+		if err != nil {
+			return nil, err
+		}
+	*/
+	r.dec = gob.NewDecoder(r.fp)
 	return &r, nil
 }
 
