@@ -193,6 +193,10 @@ func Dump(
 		log.Info(fmt.Sprintf("'%s' written", dumpFile))
 	}()
 	gw := gzip.NewWriter(fp)
+	defer func() {
+		gw.Close()
+		log.Info("gzip writer closed")
+	}()
 	enc := gob.NewEncoder(gw)
 
 	// read DB
@@ -266,7 +270,7 @@ func NewReader(testnet string) (*Reader, error) {
 
 func (r *Reader) Next() (*Block, error) {
 	var b Block
-	if err := r.dec.Decode(b); err != nil {
+	if err := r.dec.Decode(&b); err != nil {
 		if err == io.EOF {
 			return nil, nil
 		}
