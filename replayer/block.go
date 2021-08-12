@@ -3,8 +3,8 @@ package replayer
 import (
 	"fmt"
 
+	"github.com/aurora-is-near/evm-bully/db"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type blockContext struct {
@@ -16,12 +16,12 @@ type blockContext struct {
 	hash       common.Hash    // hash = block.blockHash(blockNumber)
 }
 
-func getBlockContext(b *types.Block) (*blockContext, error) {
+func getBlockContext(b *db.Block) (*blockContext, error) {
 	var c blockContext
 	var err error
-	h := b.Header()
-	c.coinbase = b.Coinbase()
-	c.timestamp = b.Time()
+	h := b.Header
+	c.coinbase = b.Coinbase
+	c.timestamp = b.Time
 	c.number, err = bigIntToUint64(h.Number)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func getBlockContext(b *types.Block) (*blockContext, error) {
 		return nil, err
 	}
 	c.gaslimit = h.GasLimit
-	c.hash = b.Hash()
+	c.hash = b.Hash
 	return &c, nil
 }
 

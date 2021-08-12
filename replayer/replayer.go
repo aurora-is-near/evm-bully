@@ -15,15 +15,10 @@ import (
 
 	"github.com/aurora-is-near/evm-bully/db"
 	"github.com/aurora-is-near/evm-bully/replayer/neard"
-	"github.com/aurora-is-near/evm-bully/util"
 	"github.com/aurora-is-near/evm-bully/util/aurora"
 	"github.com/aurora-is-near/evm-bully/util/tar"
 	"github.com/aurora-is-near/near-api-go"
 	"github.com/aurora-is-near/near-api-go/utils"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/rawdb"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/frankbraun/codechain/util/file"
 )
@@ -36,8 +31,6 @@ type Replayer struct {
 	Gas            uint64
 	DataDir        string
 	Testnet        string
-	BlockHeight    uint64
-	BlockHash      string
 	Defrost        bool
 	Skip           bool // skip empty blocks
 	Batch          bool // batch transactions
@@ -61,46 +54,11 @@ type Breakpoint struct {
 	NearcoreHead     string `json:"nearcore"`
 	AuroraEngineHead string `json:"aurora-engine"`
 	Transaction      string `json:"transaction"`
-	tx               *types.Transaction
-}
-
-// traverse blockchain backwards starting at block b with given blockHeight
-// and return list of block hashes starting with the genesis block.
-func traverse(
-	db ethdb.Database,
-	b *types.Block,
-	blockHeight uint64,
-) ([]common.Hash, error) {
-	var (
-		blocks  []common.Hash
-		txCount uint64
-	)
-	for blockHeight > 0 {
-		blockHash := b.ParentHash()
-		blockHeight--
-		b = rawdb.ReadBlock(db, blockHash, blockHeight)
-		if b == nil {
-			return nil, fmt.Errorf("cannot read block at height %d with hash %s",
-				blockHeight, blockHash.Hex())
-		}
-		log.Info(fmt.Sprintf("read block at height %d with hash %s",
-			blockHeight, blockHash.Hex()))
-		blocks = append(blocks, blockHash)
-		txCount += uint64(len(b.Transactions()))
-	}
-	// reverse blocks
-	for i, j := 0, len(blocks)-1; i < j; i, j = i+1, j-1 {
-		blocks[i], blocks[j] = blocks[j], blocks[i]
-	}
-	log.Info(fmt.Sprintf("total number of transactions: %d", txCount))
-	return blocks, nil
+	tx               *db.Transaction
 }
 
 // startGenerator starts a goroutine that feeds transactions into the returned tx channel.
-func (r *Replayer) startTxGenerator(
-	db ethdb.Database,
-	blocks []common.Hash,
-) chan *Tx {
+func (r *Replayer) startTxGenerator() chan *Tx {
 	c := make(chan *Tx, 10*r.BatchSize)
 
 	go func() {
@@ -108,24 +66,37 @@ func (r *Replayer) startTxGenerator(
 		genesisBlock := getGenesisBlock(r.Testnet)
 		c <- r.beginChainTx(genesisBlock)
 
+		reader, err := db.NewReader(r.Testnet)
+		if err != nil {
+			c <- &Tx{
+				BlockNum: -1,
+				Error:    err,
+			}
+			return
+		}
+		defer reader.Close()
+
+		blockHeight := 0
 	outer:
-		for blockHeight, blockHash := range blocks {
+		for {
+			b, err := reader.Next()
+			if err != nil {
+				c <- &Tx{
+					BlockNum: -1,
+					Error:    err,
+				}
+				return
+			}
+			if b == nil {
+				break
+			}
+
 			if blockHeight < r.StartBlock {
 				c <- &Tx{
 					BlockNum: -1,
 					Comment:  fmt.Sprintf("skipping block %d", blockHeight),
 				}
 				continue
-			}
-			// read block from DB
-			b := rawdb.ReadBlock(db, blockHash, uint64(blockHeight))
-			if b == nil {
-				c <- &Tx{
-					BlockNum: -1,
-					Error: fmt.Errorf("cannot read block at height %d with hash %s",
-						blockHeight, blockHash.Hex()),
-				}
-				return
 			}
 
 			// early break, if necessary
@@ -136,7 +107,7 @@ func (r *Replayer) startTxGenerator(
 				}
 				log.Info("sleep")
 				time.Sleep(5 * time.Second)
-				txs := b.Transactions()
+				txs := b.Transactions
 				if txs != nil && len(txs) > 0 {
 					r.Breakpoint.tx = txs[0]
 				}
@@ -152,7 +123,7 @@ func (r *Replayer) startTxGenerator(
 				}
 				return
 			}
-			if !r.Skip || len(b.Transactions()) > 0 {
+			if !r.Skip || len(b.Transactions) > 0 {
 				c <- beginBlockTx(r.Gas, ctx)
 			} else {
 				c <- &Tx{
@@ -162,7 +133,7 @@ func (r *Replayer) startTxGenerator(
 			}
 
 			// actual transactions
-			for i, tx := range b.Transactions() {
+			for i, tx := range b.Transactions {
 				// early break, if necessary
 				if r.BreakBlock != -1 && blockHeight == r.BreakBlock && i == r.BreakTx {
 					c <- &Tx{
@@ -181,15 +152,6 @@ func (r *Replayer) startTxGenerator(
 					}
 					continue
 				}
-				// get signed transaction in RLP encoding
-				rlp, err := tx.MarshalBinary()
-				if err != nil {
-					c <- &Tx{
-						BlockNum: -1,
-						Error:    err,
-					}
-					return
-				}
 				amount, err := utils.FormatNearAmount(strconv.FormatUint(r.Gas/uint64(r.BatchSize), 10))
 				if err != nil {
 					c <- &Tx{
@@ -202,12 +164,13 @@ func (r *Replayer) startTxGenerator(
 					BlockNum: blockHeight,
 					TxNum:    i,
 					Comment: fmt.Sprintf("submit(%d, tx=%d, tx_size=%d, gas=%sⓃ)",
-						blockHeight, i, len(rlp), amount),
+						blockHeight, i, len(tx.RLP), amount),
 					MethodName: "submit",
-					Args:       rlp,
+					Args:       tx.RLP,
 					EthTx:      tx,
 				}
 			}
+			blockHeight++
 		}
 		close(c)
 	}()
@@ -216,8 +179,6 @@ func (r *Replayer) startTxGenerator(
 }
 
 func (r *Replayer) replay(
-	db ethdb.Database,
-	blocks []common.Hash,
 	evmContract string,
 ) (blockNum int, txNum int, errormsg []byte, err error) {
 	// setup, if necessary
@@ -266,7 +227,7 @@ func (r *Replayer) replay(
 	// process transactions
 	batch := make([]near.Action, 0, r.BatchSize)
 	zeroAmount := big.NewInt(0)
-	c := r.startTxGenerator(db, blocks)
+	c := r.startTxGenerator()
 	for tx := range c {
 		if tx.Error != nil {
 			return -1, -1, nil, tx.Error
@@ -334,30 +295,8 @@ func (r *Replayer) replay(
 
 // Replay transactions with evmContract.
 func (r *Replayer) Replay(evmContract string) error {
-	// determine cache directory
-	cacheDir, err := util.DetermineCacheDir(r.Testnet)
-	if err != nil {
-		return err
-	}
-
-	// open database
-	db, blocks, err := db.Open(r.DataDir, r.Testnet, cacheDir, r.BlockHeight,
-		r.BlockHash, r.Defrost)
-	if err != nil {
-		return err
-	}
-	defer func() {
-		log.Info("closing DB")
-		db.Close()
-	}()
-
 	keyPath := r.Config.KeyPath
-	var (
-		blockNum int
-		txNum    int
-		errormsg []byte
-	)
-	blockNum, txNum, errormsg, err = r.replay(db, blocks, evmContract)
+	blockNum, txNum, errormsg, err := r.replay(evmContract)
 	if err != nil {
 		if r.Autobreak && blockNum != -1 {
 			// restore key path
@@ -366,7 +305,7 @@ func (r *Replayer) Replay(evmContract string) error {
 			r.BreakBlock = blockNum
 			r.BreakTx = txNum
 			log.Info("replay again with breakpoint set")
-			if _, _, _, err := r.replay(db, blocks, evmContract); err != nil {
+			if _, _, _, err := r.replay(evmContract); err != nil {
 				return err
 			}
 		} else {
@@ -380,31 +319,27 @@ func (r *Replayer) Replay(evmContract string) error {
 	return nil
 }
 
-func showTx(tx *types.Transaction) {
-	rlp, err := tx.MarshalBinary()
-	if err != nil {
-		panic(err) // marshalled before
-	}
+func showTx(tx *db.Transaction) {
 	fmt.Println("transaction:")
-	fmt.Println("0x" + hex.EncodeToString(rlp))
-	fmt.Printf("nonce: %d\n", tx.Nonce())
-	fmt.Printf("gasPrice: %s\n", tx.GasPrice().String())
-	fmt.Printf("gasLimit: %d\n", tx.Gas())
-	if tx.To() != nil {
-		fmt.Printf("to: 0x%s\n", hex.EncodeToString(tx.To()[:]))
+	fmt.Println("0x" + hex.EncodeToString(tx.RLP))
+	fmt.Printf("nonce: %d\n", tx.Nonce)
+	fmt.Printf("gasPrice: %s\n", tx.GasPrice.String())
+	fmt.Printf("gasLimit: %d\n", tx.GasLimit)
+	if tx.To != nil {
+		fmt.Printf("to: 0x%s\n", hex.EncodeToString(tx.To[:]))
 	} else {
 		fmt.Println("to: contract creation")
 	}
-	fmt.Printf("value: %s\n", tx.Value().String())
-	if len(tx.Data()) > 0 {
+	fmt.Printf("value: %s\n", tx.Value.String())
+	if len(tx.Data) > 0 {
 		fmt.Println("data:")
-		fmt.Println("0x" + hex.EncodeToString(tx.Data()))
+		fmt.Println("0x" + hex.EncodeToString(tx.Data))
 	}
 }
 
 func procTxResult(
 	batch bool,
-	tx *types.Transaction,
+	tx *db.Transaction,
 	txResult map[string]interface{},
 ) ([]byte, error) {
 	utils.PrettyPrintResponse(txResult)
@@ -441,11 +376,7 @@ func (r *Replayer) saveBreakpoint(errormsg []byte) error {
 
 	// encode transaction
 	if r.Breakpoint.tx != nil {
-		rlp, err := r.Breakpoint.tx.MarshalBinary()
-		if err != nil {
-			return err
-		}
-		r.Breakpoint.Transaction = hex.EncodeToString(rlp)
+		r.Breakpoint.Transaction = hex.EncodeToString(r.Breakpoint.tx.RLP)
 	}
 
 	// remove output dir

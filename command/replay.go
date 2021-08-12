@@ -27,12 +27,10 @@ func Replay(argv0 string, args ...string) error {
 	batchSize := fs.Int("size", 10, "Batch size when batching transactions")
 	breakBlock := fs.Int("breakblock", -1, "Break replaying at this block height")
 	breakTx := fs.Int("breaktx", 0, "Break replaying at this transaction (in block given by -breakblock)")
-	block := fs.Uint64("block", defaultGoerliBlockHeight, "Block height to replay to")
 	contract := fs.String("contract", "", "EVM contract file to deploy")
 	dataDir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
 	gas := fs.Uint64("gas", defaultGas, "Max amount of gas a call can use (in gas units)")
-	hash := fs.String("hash", defaultGoerliBlockHash, "Block hash to replay to")
 	initialBalance := fs.String("initial-balance", defaultInitialBalance, "Number of tokens to transfer to newly created account")
 	release := fs.Bool("release", false, "Run release version of neard (instead of debug version)")
 	setup := fs.Bool("setup", false, "Setup and run neard before replaying (auto-deploys contract)")
@@ -89,7 +87,6 @@ func Replay(argv0 string, args ...string) error {
 	if err != nil {
 		return err
 	}
-	adjustBlockDefaults(block, hash, testnet)
 	if !*setup {
 		if fs.NArg() != 1 {
 			fs.Usage()
@@ -128,8 +125,6 @@ func Replay(argv0 string, args ...string) error {
 		Gas:            *gas,
 		DataDir:        *dataDir,
 		Testnet:        testnet,
-		BlockHeight:    *block,
-		BlockHash:      *hash,
 		Defrost:        *defrost,
 		Skip:           *skip,
 		Batch:          *batch,

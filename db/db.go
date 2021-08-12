@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"encoding/gob"
 	"fmt"
+	"io"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -20,6 +21,10 @@ import (
 )
 
 type Block struct {
+	Header       *types.Header
+	Coinbase     common.Address
+	Time         uint64
+	Hash         common.Hash
 	Transactions []*Transaction
 }
 
@@ -187,8 +192,8 @@ func Dump(
 		fp.Close()
 		log.Info(fmt.Sprintf("'%s' written", dumpFile))
 	}()
-	w := gzip.NewWriter(fp)
-	enc := gob.NewEncoder(w)
+	gw := gzip.NewWriter(fp)
+	enc := gob.NewEncoder(gw)
 
 	// read DB
 	for blockHeight, blockHash := range blocks {
@@ -201,6 +206,10 @@ func Dump(
 
 		// transactions
 		var encBlock Block
+		encBlock.Header = b.Header()
+		encBlock.Coinbase = b.Coinbase()
+		encBlock.Time = b.Time()
+		encBlock.Hash = b.Hash()
 		if len(b.Transactions()) > 0 {
 			for _, tx := range b.Transactions() {
 				encTx, err := readTx(tx)
@@ -219,6 +228,53 @@ func Dump(
 	return nil
 }
 
-func ReadFromDump() error {
-	return nil
+type Reader struct {
+	fp  *os.File
+	dec *gob.Decoder
+}
+
+func NewReader(testnet string) (*Reader, error) {
+	// determine cache directory
+	cacheDir, err := util.DetermineCacheDir(testnet)
+	if err != nil {
+		return nil, err
+	}
+
+	// check dump file
+	dumpFile := filepath.Join(cacheDir, "dump.gz")
+	exists, err := file.Exists(dumpFile)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, fmt.Errorf("db: file '%s' doesn't exist", dumpFile)
+	}
+
+	// open reader
+	var r Reader
+	r.fp, err = os.Open(dumpFile)
+	if err != nil {
+		return nil, err
+	}
+	gr, err := gzip.NewReader(r.fp)
+	if err != nil {
+		return nil, err
+	}
+	r.dec = gob.NewDecoder(gr)
+	return &r, nil
+}
+
+func (r *Reader) Next() (*Block, error) {
+	var b Block
+	if err := r.dec.Decode(b); err != nil {
+		if err == io.EOF {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &b, nil
+}
+
+func (r *Reader) Close() error {
+	return r.fp.Close()
 }
