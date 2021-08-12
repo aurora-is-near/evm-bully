@@ -51,13 +51,65 @@ func calcStatsForBlocks(db ethdb.Database, blocks []common.Hash) error {
 	return nil
 }
 
+func calcStatsForTxsDump(blockHeight int, txs []*db.Transaction) (uint64, error) {
+	var contractTxCounter uint64
+	for i, tx := range txs {
+		// only look at contract creating transactions
+		if tx.To == nil {
+			log.Info(fmt.Sprintf("block=%d, tx=%d", blockHeight, i))
+			contractTxCounter++
+		}
+	}
+	return contractTxCounter, nil
+}
+
+func calcStatsFromDumpFile(testnet string) error {
+	r, err := db.NewReader(testnet)
+	if err != nil {
+		return err
+	}
+	defer r.Close()
+	var contractTxCounter uint64
+	var totalTxCounter uint64
+	blockHeight := 0
+	for {
+		// read block from dump file
+		b, err := r.Next()
+		if err != nil {
+			return err
+		}
+		if b == nil {
+			break
+		}
+
+		// transactions
+		if len(b.Transactions) > 0 {
+			counter, err := calcStatsForTxsDump(blockHeight, b.Transactions)
+			if err != nil {
+				return err
+			}
+			contractTxCounter += counter
+			totalTxCounter += uint64(len(b.Transactions))
+		}
+		blockHeight++
+	}
+	fmt.Printf("contract creating txs: %d\n", contractTxCounter)
+	fmt.Printf("total txs: %d\n", totalTxCounter)
+	fmt.Printf("percentage of contract creating txs: %.2f%%\n", float64(contractTxCounter)/float64(totalTxCounter)*100.0)
+	return nil
+}
+
 // CalcStats calculates some statistics for the given testnet and prints them to stdout.
 func CalcStats(
 	dataDir, testnet string,
 	blockHeight uint64,
 	blockHash string,
 	defrost bool,
+	dump bool,
 ) error {
+	if dump {
+		return calcStatsFromDumpFile(testnet)
+	}
 	// determine cache directory
 	cacheDir, err := util.DetermineCacheDir(testnet)
 	if err != nil {

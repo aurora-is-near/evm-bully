@@ -20,6 +20,7 @@ func Stats(argv0 string, args ...string) error {
 	block := fs.Uint64("block", defaultGoerliBlockHeight, "Block height")
 	dataDir := fs.String("datadir", defaultDataDir, "Data directory containing the database to read")
 	defrost := fs.Bool("defrost", false, "Defrost the database first")
+	dump := fs.Bool("dump", false, "Use dump file instead of database")
 	hash := fs.String("hash", defaultGoerliBlockHash, "Block hash")
 	f.registerFlags(fs)
 	if err := fs.Parse(args); err != nil {
@@ -35,5 +36,5 @@ func Stats(argv0 string, args ...string) error {
 		return flag.ErrHelp
 	}
 	// calculate statistics
-	return replayer.CalcStats(*dataDir, testnet, *block, *hash, *defrost)
+	return replayer.CalcStats(*dataDir, testnet, *block, *hash, *defrost, *dump)
 }
