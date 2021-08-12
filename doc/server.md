@@ -30,7 +30,7 @@ Navigate to the project root:
 Build (this will take a while, feel free to move on to future steps
 while this is happening):
 
-    cargo build -p neard --release --features protocol_feature_evm,nightly_protocol_features
+    cargo build -p neard --release --features nightly_protocol_features
 
 When the build is complete, initialize with:
 
