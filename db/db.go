@@ -19,6 +19,7 @@ import (
 	"github.com/frankbraun/codechain/util/file"
 )
 
+// Block defines an Ethereum block.
 type Block struct {
 	Header       *types.Header
 	Coinbase     common.Address
@@ -27,6 +28,7 @@ type Block struct {
 	Transactions []*Transaction
 }
 
+// Transaction defines an Ethereum transaction.
 type Transaction struct {
 	RLP      []byte
 	Nonce    uint64
@@ -69,6 +71,7 @@ func traverse(
 	return blocks, nil
 }
 
+// Open database.
 func Open(
 	dataDir, testnet, cacheDir string,
 	blockHeight uint64,
@@ -233,11 +236,13 @@ func Dump(
 	return nil
 }
 
+// Reader implments a DB dump reader.
 type Reader struct {
 	fp  *os.File
 	dec *gob.Decoder
 }
 
+// NewReader returns a new DB dump reader for the given testnet.
 func NewReader(testnet string) (*Reader, error) {
 	// determine cache directory
 	cacheDir, err := util.DetermineCacheDir(testnet)
@@ -271,6 +276,7 @@ func NewReader(testnet string) (*Reader, error) {
 	return &r, nil
 }
 
+// Next returns the next Block for the given reader or nil.
 func (r *Reader) Next() (*Block, error) {
 	var b Block
 	if err := r.dec.Decode(&b); err != nil {
@@ -282,6 +288,7 @@ func (r *Reader) Next() (*Block, error) {
 	return &b, nil
 }
 
+// Close closes the reader.
 func (r *Reader) Close() error {
 	return r.fp.Close()
 }

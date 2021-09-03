@@ -21,6 +21,7 @@ func getGenesisBlock(net string) *core.Genesis {
 	}
 }
 
+// AddrSlice is an array of addresses.
 type AddrSlice []common.Address
 
 func (s AddrSlice) Len() int           { return len(s) }

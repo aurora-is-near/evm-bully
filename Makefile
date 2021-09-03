@@ -15,7 +15,7 @@ fmt:
 	mv tmp.md doc/notes.md
 
 test:
-	gocheck -c
+	gocheck -c -e doc -e scripts
 
 test-install:
 	go get github.com/frankbraun/gocheck

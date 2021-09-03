@@ -10,6 +10,7 @@ import (
 	"github.com/aurora-is-near/near-api-go/utils"
 )
 
+// TLAMinLength defines the minimum length for top-level accounts.
 const TLAMinLength = 32
 
 // CreateAccount allow to create accounts.
