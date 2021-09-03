@@ -1,4 +1,4 @@
-.PHONY: all install fmt test
+.PHONY: all install fmt test test-install
 
 all:
 	env GO111MODULE=on go build -v .
@@ -15,4 +15,9 @@ fmt:
 	mv tmp.md doc/notes.md
 
 test:
-	env GO111MODULE=on go test -v ./...
+	gocheck -c
+
+test-install:
+	go get github.com/frankbraun/gocheck
+	go get golang.org/x/tools/cmd/goimports
+	go get golang.org/x/lint/golint
