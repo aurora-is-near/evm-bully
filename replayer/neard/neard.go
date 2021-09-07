@@ -103,7 +103,7 @@ func Setup(release bool) (*NEARDaemon, error) {
 		return nil, err
 	}
 	// get current HEAD
-	n.Head, err = git.Head()
+	n.Head, err = git.Head(nearDir)
 	if err != nil {
 		return nil, err
 	}

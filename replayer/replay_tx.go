@@ -32,7 +32,7 @@ func buildAuroraEngine(head string) error {
 		return err
 	}
 	// checkout
-	if err := git.Checkout(head); err != nil {
+	if err := git.Checkout(nearDir, head); err != nil {
 		return err
 	}
 	// build
@@ -59,7 +59,7 @@ func buildNearcore(head string, release bool) error {
 		return err
 	}
 	// checkout
-	if err := git.Checkout(head); err != nil {
+	if err := git.Checkout(nearDir, head); err != nil {
 		return err
 	}
 	// build
