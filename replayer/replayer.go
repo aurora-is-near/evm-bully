@@ -185,12 +185,19 @@ func (r *Replayer) replay(
 	if r.Setup {
 		// setup neard
 		log.Info("setup neard")
-		neard, err := neard.Setup(r.Release)
+		nearDir := filepath.Join("..", "nearcore")
+		nearDaemon, err := neard.LoadFromRepo(nearDir, r.Release, true)
 		if err != nil {
 			return -1, -1, nil, err
 		}
-		defer neard.Stop()
-		r.Breakpoint.NearcoreHead = neard.Head
+		if err := nearDaemon.SetupLocalData(); err != nil {
+			return -1, -1, nil, err
+		}
+		if err := nearDaemon.Start(); err != nil {
+			return -1, -1, nil, err
+		}
+		defer nearDaemon.Stop()
+		r.Breakpoint.NearcoreHead = nearDaemon.Head
 
 		log.Info("sleep")
 		time.Sleep(5 * time.Second)

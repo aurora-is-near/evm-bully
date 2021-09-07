@@ -7,20 +7,52 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 
 	"github.com/aurora-is-near/evm-bully/util/git"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/frankbraun/codechain/util/file"
 )
 
-// NEARDaemon wraps a running neard.
+// NEARDaemon wraps a neard.
 type NEARDaemon struct {
 	Head       string
+	binaryPath string
+	localDir   string
 	nearDaemon *exec.Cmd
 }
 
-// Build builds neard in CWD.
-func Build(release bool) error {
+func getDefaultLocalDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".near", "local"), nil
+}
+
+// LoadFromBinary loads NEARDaemon from existing binary.
+func LoadFromBinary(binaryPath string, head string) (*NEARDaemon, error) {
+	log.Info("load neard binary")
+
+	if _, err := os.Stat(binaryPath); err != nil {
+		return nil, fmt.Errorf("can't access neard binary on path %v: %v", binaryPath, err)
+	}
+
+	localDir, err := getDefaultLocalDir()
+	if err != nil {
+		return nil, err
+	}
+
+	return &NEARDaemon{
+		Head:       head,
+		binaryPath: binaryPath,
+		localDir:   localDir,
+	}, nil
+}
+
+func buildBinary(repoPath string, release bool) error {
+	log.Info("build neard")
+
 	args := []string{
 		"build",
 		"--package", "neard",
@@ -29,28 +61,70 @@ func Build(release bool) error {
 	if release {
 		args = append(args, "--release")
 	}
+
 	cmd := exec.Command("cargo", args...)
+	cmd.Dir = repoPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-func initDaemon(release bool, localDir string) error {
-	var name string
-	if release {
-		name = filepath.Join(".", "target", "release", "neard")
-	} else {
-		name = filepath.Join(".", "target", "debug", "neard")
+// LoadFromRepo loads NEARDaemon from repo by provided path (and build if requested).
+func LoadFromRepo(repoPath string, release bool, build bool) (*NEARDaemon, error) {
+	log.Info("load neard repo")
+
+	head, err := git.Head(repoPath)
+	if err != nil {
+		return nil, err
 	}
-	cmd := exec.Command(name, "--home="+localDir, "--verbose=true", "init")
+
+	if build {
+		if err := buildBinary(repoPath, release); err != nil {
+			return nil, err
+		}
+	}
+
+	binaryPath := filepath.Join(repoPath, "target", "debug", "neard")
+	if release {
+		binaryPath = filepath.Join(repoPath, "target", "release", "neard")
+	}
+
+	return LoadFromBinary(binaryPath, head)
+}
+
+// Backup local data if it exists
+func (daemon *NEARDaemon) backupLocalData() error {
+	exists, err := file.Exists(daemon.localDir)
+	if err != nil {
+		return err
+	}
+	if exists {
+		localOld := strings.TrimSuffix(daemon.localDir, "/") + "_old"
+		log.Info(fmt.Sprintf("mv %s %s", daemon.localDir, localOld))
+		// remove old backup directory
+		if err := os.RemoveAll(localOld); err != nil {
+			return err
+		}
+		// move
+		if err := os.Rename(daemon.localDir, localOld); err != nil {
+			return err
+		}
+	} else {
+		log.Info(fmt.Sprintf("directory '%s' does not exist", daemon.localDir))
+	}
+	return nil
+}
+
+func (daemon *NEARDaemon) init() error {
+	cmd := exec.Command(daemon.binaryPath, "--home="+daemon.localDir, "--verbose=true", "init")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-func editGenesis(localDir string) error {
-	filename := filepath.Join(localDir, "genesis.json")
-	backup := filepath.Join(localDir, "genesis_old.json")
+func (daemon *NEARDaemon) editGenesis() error {
+	filename := filepath.Join(daemon.localDir, "genesis.json")
+	backup := filepath.Join(daemon.localDir, "genesis_old.json")
 	if err := file.Copy(filename, backup); err != nil {
 		return err
 	}
@@ -75,118 +149,44 @@ func editGenesis(localDir string) error {
 	return nil
 }
 
-func (n *NEARDaemon) start(release bool, localDir string) error {
-	var name string
-	if release {
-		name = filepath.Join(".", "target", "release", "neard")
-	} else {
-		name = filepath.Join(".", "target", "debug", "neard")
-	}
-	n.nearDaemon = exec.Command(name, "--home="+localDir, "--verbose=true", "run")
-	n.nearDaemon.Stdout = os.Stdout
-	n.nearDaemon.Stderr = os.Stderr
-	return n.nearDaemon.Start()
-}
+// SetupLocalData initializes local data of a NEARDaemon.
+func (daemon *NEARDaemon) SetupLocalData() error {
+	log.Info("setup neard local data")
 
-// Setup initializes and starts a (release) NEARDaemon.
-func Setup(release bool) (*NEARDaemon, error) {
-	var n NEARDaemon
-	log.Info("setup neard")
-	// get cwd
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
+	if err := daemon.backupLocalData(); err != nil {
+		return err
 	}
-	// switch to nearcore directory
-	nearDir := filepath.Join(cwd, "..", "nearcore")
-	if err := os.Chdir(nearDir); err != nil {
-		return nil, err
-	}
-	// get current HEAD
-	n.Head, err = git.Head(nearDir)
-	if err != nil {
-		return nil, err
-	}
-	log.Info(fmt.Sprintf("head=%s", n.Head))
-	// backup .near/local, if it exists
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
-	localDir := filepath.Join(home, ".near", "local")
-	exists, err := file.Exists(localDir)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		localOld := localDir + "_old"
-		log.Info(fmt.Sprintf("mv %s %s", localDir, localOld))
-		// remove old backup directory
-		if err := os.RemoveAll(localOld); err != nil {
-			return nil, err
-		}
-		// move
-		if err := os.Rename(localDir, localOld); err != nil {
-			return nil, err
-		}
-	} else {
-		log.Info(fmt.Sprintf("directory '%s' does not exist", localDir))
-	}
-	// make sure neard is build
-	if err := Build(release); err != nil {
-		return nil, err
-	}
+
 	// initialize neard
-	if err := initDaemon(release, localDir); err != nil {
-		return nil, err
+	if err := daemon.init(); err != nil {
+		return err
 	}
+
 	// edit genesis.json
-	if err := editGenesis(localDir); err != nil {
-		return nil, err
+	if err := daemon.editGenesis(); err != nil {
+		return err
 	}
-	// start neard
-	if err := n.start(release, localDir); err != nil {
-		return nil, err
-	}
-	// switch back to original directory
-	if err := os.Chdir(cwd); err != nil {
-		return nil, err
-	}
-	return &n, nil
+
+	return nil
 }
 
-// Start starts a (release) NEARDaemon.
-func Start(release bool) (*NEARDaemon, error) {
-	var n NEARDaemon
+// RestoreLocalData restores local data of a NEARDaemon from given directory.
+func (daemon *NEARDaemon) RestoreLocalData(source string) error {
+	log.Info("restore neard local data")
+	return file.CopyDir(source, daemon.localDir)
+}
+
+// Start NEARDaemon.
+func (daemon *NEARDaemon) Start() error {
 	log.Info("start neard")
-	// get cwd
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-	// switch to nearcore directory
-	nearDir := filepath.Join(cwd, "..", "nearcore")
-	if err := os.Chdir(nearDir); err != nil {
-		return nil, err
-	}
-	// start neard
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
-	}
-	localDir := filepath.Join(home, ".near", "local")
-	if err := n.start(release, localDir); err != nil {
-		return nil, err
-	}
-	// switch back to original directory
-	if err := os.Chdir(cwd); err != nil {
-		return nil, err
-	}
-	return &n, nil
+	daemon.nearDaemon = exec.Command(daemon.binaryPath, "--home="+daemon.localDir, "--verbose=true", "run")
+	daemon.nearDaemon.Stdout = os.Stdout
+	daemon.nearDaemon.Stderr = os.Stderr
+	return daemon.nearDaemon.Start()
 }
 
 // Stop NEARDaemon.
-func (n *NEARDaemon) Stop() error {
+func (daemon *NEARDaemon) Stop() error {
 	log.Info("stop neard")
-	return n.nearDaemon.Process.Kill()
+	return daemon.nearDaemon.Process.Kill()
 }
