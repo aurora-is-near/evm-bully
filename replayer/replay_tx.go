@@ -21,26 +21,13 @@ import (
 
 func buildAuroraEngine(head string) error {
 	fmt.Println("build aurora-engine")
-	// get cwd
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	// switch to aurora-engine directory
-	nearDir := filepath.Join(cwd, "..", "aurora-engine")
-	if err := os.Chdir(nearDir); err != nil {
-		return err
-	}
+	engineDir := filepath.Join("..", "aurora-engine")
 	// checkout
-	if err := git.Checkout(nearDir, head); err != nil {
+	if err := git.Checkout(engineDir, head); err != nil {
 		return err
 	}
 	// build
-	if err := gnumake.Make("evm-bully=yes"); err != nil {
-		return err
-	}
-	// switch back to original directory
-	if err := os.Chdir(cwd); err != nil {
+	if err := gnumake.Make(engineDir, "evm-bully=yes"); err != nil {
 		return err
 	}
 	return nil
