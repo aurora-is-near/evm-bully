@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/aurora-is-near/evm-bully/replayer"
+	"github.com/aurora-is-near/evm-bully/util/aurora"
 	"github.com/aurora-is-near/near-api-go"
 )
 
@@ -36,6 +37,7 @@ func Replay(argv0 string, args ...string) error {
 	setup := fs.Bool("setup", false, "Setup and run neard before replaying (auto-deploys contract)")
 	neardPath := fs.String("neard", "", "Path to neard binary (won't build neard if -setup is provided)")
 	neardHead := fs.String("neardhead", "", "Git hash of neard (required if -neard is provided)")
+	auroraCliPath := fs.String("auroracli", "aurora", "Path (or alias) to aurora-cli")
 	skip := fs.Bool("skip", false, "Skip empty blocks during replay")
 	startBlock := fs.Int("startblock", 0, "Start replaying at this block height")
 	startTx := fs.Int("starttx", 0, "Start replaying at this transaction (in block given by -startblock)")
@@ -103,6 +105,8 @@ func Replay(argv0 string, args ...string) error {
 			return flag.ErrHelp
 		}
 	}
+
+	aurora.SetAuroraCliPath(*auroraCliPath)
 
 	// determine evmContract
 	var evmContract string
