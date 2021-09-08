@@ -34,6 +34,8 @@ func Replay(argv0 string, args ...string) error {
 	initialBalance := fs.String("initial-balance", defaultInitialBalance, "Number of tokens to transfer to newly created account")
 	release := fs.Bool("release", false, "Run release version of neard (instead of debug version)")
 	setup := fs.Bool("setup", false, "Setup and run neard before replaying (auto-deploys contract)")
+	neardPath := fs.String("neard", "", "Path to neard binary (won't build neard if -setup is provided)")
+	neardHead := fs.String("neardhead", "", "Git hash of neard (required if -neard is provided)")
 	skip := fs.Bool("skip", false, "Skip empty blocks during replay")
 	startBlock := fs.Int("startblock", 0, "Start replaying at this block height")
 	startTx := fs.Int("starttx", 0, "Start replaying at this transaction (in block given by -startblock)")
@@ -82,6 +84,9 @@ func Replay(argv0 string, args ...string) error {
 	}
 	if *contract != "" && !*setup {
 		return errors.New("option -contract requires option -setup")
+	}
+	if *neardPath != "" && *neardHead == "" {
+		return errors.New("option -neard requires option -neardhead")
 	}
 	chainID, testnet, err := testnetFlags.determineTestnet()
 	if err != nil {
@@ -136,6 +141,8 @@ func Replay(argv0 string, args ...string) error {
 		BreakTx:        *breakTx,
 		Release:        *release,
 		Setup:          *setup,
+		NeardPath:      *neardPath,
+		NeardHead:      *neardHead,
 		InitialBalance: *initialBalance,
 		Contract:       *contract,
 		Breakpoint: replayer.Breakpoint{

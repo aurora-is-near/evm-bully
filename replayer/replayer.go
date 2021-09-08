@@ -32,16 +32,18 @@ type Replayer struct {
 	DataDir        string
 	Testnet        string
 	Defrost        bool
-	Skip           bool // skip empty blocks
-	Batch          bool // batch transactions
-	BatchSize      int  // batch size when batching transactions
-	StartBlock     int  // start replaying at this block height
-	StartTx        int  // start replaying at this transaction (in block given by StartBlock)
-	Autobreak      bool // automatically repeat with break point after error
-	BreakBlock     int  // break replaying at this block height
-	BreakTx        int  // break replaying at this transaction (in block given by BreakBlock)
-	Release        bool // run release version of neard
-	Setup          bool // setup and run neard before replaying
+	Skip           bool   // skip empty blocks
+	Batch          bool   // batch transactions
+	BatchSize      int    // batch size when batching transactions
+	StartBlock     int    // start replaying at this block height
+	StartTx        int    // start replaying at this transaction (in block given by StartBlock)
+	Autobreak      bool   // automatically repeat with break point after error
+	BreakBlock     int    // break replaying at this block height
+	BreakTx        int    // break replaying at this transaction (in block given by BreakBlock)
+	Release        bool   // run release version of neard
+	Setup          bool   // setup and run neard before replaying
+	NeardPath      string // path to neard binary
+	NeardHead      string // git hash of neard
 	InitialBalance string
 	Contract       string
 	Breakpoint     Breakpoint
@@ -185,11 +187,18 @@ func (r *Replayer) replay(
 	if r.Setup {
 		// setup neard
 		log.Info("setup neard")
-		nearDir := filepath.Join("..", "nearcore")
-		nearDaemon, err := neard.LoadFromRepo(nearDir, r.Release, true)
+
+		var nearDaemon *neard.NEARDaemon
+		var err error
+		if r.NeardPath != "" {
+			nearDaemon, err = neard.LoadFromBinary(r.NeardPath, r.NeardHead)
+		} else {
+			nearDaemon, err = neard.LoadFromRepo(filepath.Join("..", "nearcore"), r.Release, true)
+		}
 		if err != nil {
 			return -1, -1, nil, err
 		}
+
 		if err := nearDaemon.SetupLocalData(); err != nil {
 			return -1, -1, nil, err
 		}
