@@ -78,11 +78,27 @@ func (r *Replayer) startTxGenerator() chan *Tx {
 		}
 		defer reader.Close()
 
-		blockHeight := 0
+		emptyRangeStart, emptyRangeEnd := -2, -2
+		flushEmptyRange := func() {
+			if emptyRangeEnd < 0 {
+				return
+			}
+			c <- &Tx{
+				BlockNum: -1,
+				Comment: fmt.Sprintf(
+					"begin_block() skipped for empty blocks [%d;%d]",
+					emptyRangeStart,
+					emptyRangeEnd,
+				),
+			}
+			emptyRangeStart, emptyRangeEnd = -2, -2
+		}
+
 	outer:
-		for {
+		for blockHeight := 0; true; blockHeight++ {
 			b, err := reader.Next()
 			if err != nil {
+				flushEmptyRange()
 				c <- &Tx{
 					BlockNum: -1,
 					Error:    err,
@@ -103,6 +119,7 @@ func (r *Replayer) startTxGenerator() chan *Tx {
 
 			// early break, if necessary
 			if r.BreakBlock != -1 && r.BreakTx == 0 && blockHeight == r.BreakBlock {
+				flushEmptyRange()
 				c <- &Tx{
 					BlockNum: -1,
 					Comment:  fmt.Sprintf("breaking block %d", blockHeight),
@@ -119,20 +136,24 @@ func (r *Replayer) startTxGenerator() chan *Tx {
 			// block context
 			ctx, err := getBlockContext(b)
 			if err != nil {
+				flushEmptyRange()
 				c <- &Tx{
 					BlockNum: -1,
 					Error:    err,
 				}
 				return
 			}
-			if !r.Skip || len(b.Transactions) > 0 {
-				c <- beginBlockTx(r.Gas, ctx)
-			} else {
-				c <- &Tx{
-					BlockNum: -1,
-					Comment:  fmt.Sprintf("begin_block() skipped for empty block %d", blockHeight),
+
+			if len(b.Transactions) == 0 && r.Skip {
+				if emptyRangeEnd != blockHeight-1 {
+					emptyRangeStart = blockHeight
 				}
+				emptyRangeEnd = blockHeight
+				continue
 			}
+
+			flushEmptyRange()
+			c <- beginBlockTx(r.Gas, ctx)
 
 			// actual transactions
 			for i, tx := range b.Transactions {
@@ -172,8 +193,8 @@ func (r *Replayer) startTxGenerator() chan *Tx {
 					EthTx:      tx,
 				}
 			}
-			blockHeight++
 		}
+		flushEmptyRange()
 		close(c)
 	}()
 
