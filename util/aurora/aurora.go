@@ -2,6 +2,7 @@
 package aurora
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
@@ -9,6 +10,17 @@ import (
 
 	"github.com/ethereum/go-ethereum/log"
 )
+
+var auroraCliPath string
+
+func init() {
+	auroraCliPath = "aurora"
+}
+
+// SetAuroraCliPath sets aurora-cli path (or alias)
+func SetAuroraCliPath(path string) {
+	auroraCliPath = path
+}
 
 // Install the EVM contract with given accountID owner and chainID.
 func Install(accountID string, chainID uint8, contract string) error {
@@ -20,8 +32,8 @@ func Install(accountID string, chainID uint8, contract string) error {
 		"--owner", accountID,
 		contract,
 	}
-	log.Info("$ aurora " + strings.Join(args, " "))
-	cmd := exec.Command("aurora", args...)
+	log.Info(fmt.Sprintf("$ %v %v", auroraCliPath, strings.Join(args, " ")))
+	cmd := exec.Command(auroraCliPath, args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()

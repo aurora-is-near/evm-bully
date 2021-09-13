@@ -21,53 +21,13 @@ import (
 
 func buildAuroraEngine(head string) error {
 	fmt.Println("build aurora-engine")
-	// get cwd
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	// switch to aurora-engine directory
-	nearDir := filepath.Join(cwd, "..", "aurora-engine")
-	if err := os.Chdir(nearDir); err != nil {
-		return err
-	}
+	engineDir := filepath.Join("..", "aurora-engine")
 	// checkout
-	if err := git.Checkout(head); err != nil {
+	if err := git.Checkout(engineDir, head); err != nil {
 		return err
 	}
 	// build
-	if err := gnumake.Make("evm-bully=yes"); err != nil {
-		return err
-	}
-	// switch back to original directory
-	if err := os.Chdir(cwd); err != nil {
-		return err
-	}
-	return nil
-}
-
-func buildNearcore(head string, release bool) error {
-	fmt.Println("build nearcore")
-	// get cwd
-	cwd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-	// switch to nearcore directory
-	nearDir := filepath.Join(cwd, "..", "nearcore")
-	if err := os.Chdir(nearDir); err != nil {
-		return err
-	}
-	// checkout
-	if err := git.Checkout(head); err != nil {
-		return err
-	}
-	// build
-	if err := neard.Build(release); err != nil {
-		return err
-	}
-	// switch back to original directory
-	if err := os.Chdir(cwd); err != nil {
+	if err := gnumake.Make(engineDir, "evm-bully=yes"); err != nil {
 		return err
 	}
 	return nil
@@ -92,41 +52,38 @@ func ReplayTx(
 		return err
 	}
 
-	// -build -> aurora-engine and neard
 	if build {
 		if err := buildAuroraEngine(bp.AuroraEngineHead); err != nil {
 			return err
 		}
-		if err := buildNearcore(bp.NearcoreHead, release); err != nil {
+	}
+
+	nearDir := filepath.Join("..", "nearcore")
+	if build {
+		if err := git.Checkout(nearDir, bp.NearcoreHead); err != nil {
 			return err
 		}
 	}
-
-	// copy neard directory
-	home, err := os.UserHomeDir()
+	nearDaemon, err := neard.LoadFromRepo(nearDir, release, build)
 	if err != nil {
 		return err
 	}
-	localDir := filepath.Join(home, ".near", "local")
-	if err := os.RemoveAll(localDir); err != nil {
+	if err := nearDaemon.RestoreLocalData(filepath.Join(breakpointDir, "local")); err != nil {
 		return err
 	}
-	err = file.CopyDir(filepath.Join(breakpointDir, "local"), localDir)
-	if err != nil {
+	if err := nearDaemon.Start(); err != nil {
 		return err
 	}
-
-	// start neard
-	n, err := neard.Start(release)
-	if err != nil {
-		return err
-	}
-	defer n.Stop()
+	defer nearDaemon.Stop()
 
 	log.Info("sleep")
 	time.Sleep(5 * time.Second)
 
 	// copy credentials file
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return err
+	}
 	credDir := filepath.Join(home, ".near-credentials", "local")
 	if err := os.MkdirAll(credDir, 0700); err != nil {
 		return err

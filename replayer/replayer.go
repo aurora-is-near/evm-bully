@@ -32,16 +32,18 @@ type Replayer struct {
 	DataDir        string
 	Testnet        string
 	Defrost        bool
-	Skip           bool // skip empty blocks
-	Batch          bool // batch transactions
-	BatchSize      int  // batch size when batching transactions
-	StartBlock     int  // start replaying at this block height
-	StartTx        int  // start replaying at this transaction (in block given by StartBlock)
-	Autobreak      bool // automatically repeat with break point after error
-	BreakBlock     int  // break replaying at this block height
-	BreakTx        int  // break replaying at this transaction (in block given by BreakBlock)
-	Release        bool // run release version of neard
-	Setup          bool // setup and run neard before replaying
+	Skip           bool   // skip empty blocks
+	Batch          bool   // batch transactions
+	BatchSize      int    // batch size when batching transactions
+	StartBlock     int    // start replaying at this block height
+	StartTx        int    // start replaying at this transaction (in block given by StartBlock)
+	Autobreak      bool   // automatically repeat with break point after error
+	BreakBlock     int    // break replaying at this block height
+	BreakTx        int    // break replaying at this transaction (in block given by BreakBlock)
+	Release        bool   // run release version of neard
+	Setup          bool   // setup and run neard before replaying
+	NeardPath      string // path to neard binary
+	NeardHead      string // git hash of neard
 	InitialBalance string
 	Contract       string
 	Breakpoint     Breakpoint
@@ -76,11 +78,27 @@ func (r *Replayer) startTxGenerator() chan *Tx {
 		}
 		defer reader.Close()
 
-		blockHeight := 0
+		emptyRangeStart, emptyRangeEnd := -2, -2
+		flushEmptyRange := func() {
+			if emptyRangeEnd < 0 {
+				return
+			}
+			c <- &Tx{
+				BlockNum: -1,
+				Comment: fmt.Sprintf(
+					"begin_block() skipped for empty blocks [%d;%d]",
+					emptyRangeStart,
+					emptyRangeEnd,
+				),
+			}
+			emptyRangeStart, emptyRangeEnd = -2, -2
+		}
+
 	outer:
-		for {
+		for blockHeight := 0; true; blockHeight++ {
 			b, err := reader.Next()
 			if err != nil {
+				flushEmptyRange()
 				c <- &Tx{
 					BlockNum: -1,
 					Error:    err,
@@ -101,6 +119,7 @@ func (r *Replayer) startTxGenerator() chan *Tx {
 
 			// early break, if necessary
 			if r.BreakBlock != -1 && r.BreakTx == 0 && blockHeight == r.BreakBlock {
+				flushEmptyRange()
 				c <- &Tx{
 					BlockNum: -1,
 					Comment:  fmt.Sprintf("breaking block %d", blockHeight),
@@ -117,20 +136,24 @@ func (r *Replayer) startTxGenerator() chan *Tx {
 			// block context
 			ctx, err := getBlockContext(b)
 			if err != nil {
+				flushEmptyRange()
 				c <- &Tx{
 					BlockNum: -1,
 					Error:    err,
 				}
 				return
 			}
-			if !r.Skip || len(b.Transactions) > 0 {
-				c <- beginBlockTx(r.Gas, ctx)
-			} else {
-				c <- &Tx{
-					BlockNum: -1,
-					Comment:  fmt.Sprintf("begin_block() skipped for empty block %d", blockHeight),
+
+			if len(b.Transactions) == 0 && r.Skip {
+				if emptyRangeEnd != blockHeight-1 {
+					emptyRangeStart = blockHeight
 				}
+				emptyRangeEnd = blockHeight
+				continue
 			}
+
+			flushEmptyRange()
+			c <- beginBlockTx(r.Gas, ctx)
 
 			// actual transactions
 			for i, tx := range b.Transactions {
@@ -170,8 +193,8 @@ func (r *Replayer) startTxGenerator() chan *Tx {
 					EthTx:      tx,
 				}
 			}
-			blockHeight++
 		}
+		flushEmptyRange()
 		close(c)
 	}()
 
@@ -185,12 +208,26 @@ func (r *Replayer) replay(
 	if r.Setup {
 		// setup neard
 		log.Info("setup neard")
-		neard, err := neard.Setup(r.Release)
+
+		var nearDaemon *neard.NEARDaemon
+		var err error
+		if r.NeardPath != "" {
+			nearDaemon, err = neard.LoadFromBinary(r.NeardPath, r.NeardHead)
+		} else {
+			nearDaemon, err = neard.LoadFromRepo(filepath.Join("..", "nearcore"), r.Release, true)
+		}
 		if err != nil {
 			return -1, -1, nil, err
 		}
-		defer neard.Stop()
-		r.Breakpoint.NearcoreHead = neard.Head
+
+		if err := nearDaemon.SetupLocalData(); err != nil {
+			return -1, -1, nil, err
+		}
+		if err := nearDaemon.Start(); err != nil {
+			return -1, -1, nil, err
+		}
+		defer nearDaemon.Stop()
+		r.Breakpoint.NearcoreHead = nearDaemon.Head
 
 		log.Info("sleep")
 		time.Sleep(5 * time.Second)
