@@ -265,6 +265,12 @@ func (r *Replayer) replay(
 	batch := make([]near.Action, 0, r.BatchSize)
 	zeroAmount := big.NewInt(0)
 	c := r.startTxGenerator()
+
+	// Sleep 2 seconds to prevent contract installation data-race
+	// which leads to InvalidNonce error message from nearcore
+	log.Info("sleeping for 2 seconds")
+	time.Sleep(2 * time.Second)
+
 	for tx := range c {
 		if tx.Error != nil {
 			return -1, -1, nil, tx.Error
