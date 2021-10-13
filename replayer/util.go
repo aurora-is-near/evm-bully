@@ -39,6 +39,6 @@ func bigIntToRawU256(b *big.Int) (RawU256, error) {
 				b.String())
 	}
 	// the encoding is already big-endian
-	copy(res[:], bytes[:])
+	copy(res[32-len(bytes):], bytes[:])
 	return res, nil
 }
