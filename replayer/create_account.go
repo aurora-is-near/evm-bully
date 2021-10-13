@@ -47,7 +47,7 @@ func (ca *CreateAccount) Create(accountID string) error {
 	}
 
 	// check to see if account already exists
-	_, err = c.State(accountID)
+	_, err = c.GetAccountState(accountID)
 	if err == nil {
 		return fmt.Errorf("sorry, account '%s' already exists", accountID)
 	} else if !strings.Contains(err.Error(), "does not exist while viewing") {

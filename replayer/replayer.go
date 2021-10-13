@@ -204,6 +204,8 @@ func (r *Replayer) startTxGenerator() chan *Tx {
 func (r *Replayer) replay(
 	evmContract string,
 ) (blockNum int, txNum int, errormsg []byte, err error) {
+	conn := near.NewConnectionWithTimeout(r.Config.NodeURL, r.Timeout)
+
 	// setup, if necessary
 	if r.Setup {
 		// setup neard
@@ -229,8 +231,13 @@ func (r *Replayer) replay(
 		defer nearDaemon.Stop()
 		r.Breakpoint.NearcoreHead = nearDaemon.Head
 
-		log.Info("sleep")
-		time.Sleep(5 * time.Second)
+		nearStarted := checkUntilTrue(time.Second*100, "near node is not up yet", func() bool {
+			_, err := conn.GetNodeStatus()
+			return err == nil
+		})
+		if !nearStarted {
+			return -1, -1, nil, fmt.Errorf("replayer: near node is not reachable after 100 seconds")
+		}
 
 		// create account
 		log.Info("create account")
@@ -243,6 +250,14 @@ func (r *Replayer) replay(
 			return -1, -1, nil, err
 		}
 
+		accountCreated := checkUntilTrue(time.Second*100, "account is not accessible yet", func() bool {
+			_, err := conn.GetAccountState(r.Breakpoint.AccountID)
+			return err == nil
+		})
+		if !accountCreated {
+			return -1, -1, nil, fmt.Errorf("replayer: account is not accessible after 100 seconds")
+		}
+
 		// install EVM contract
 		log.Info("install EVM contract")
 		err = aurora.Install(r.Breakpoint.AccountID, r.ChainID, r.Contract)
@@ -250,12 +265,19 @@ func (r *Replayer) replay(
 			return -1, -1, nil, err
 		}
 
+		contractInstalled := checkUntilTrue(time.Second*100, "contract is not accessible yet", func() bool {
+			_, err := conn.GetContractCode(r.Breakpoint.AccountID)
+			return err == nil
+		})
+		if !contractInstalled {
+			return -1, -1, nil, fmt.Errorf("replayer: contract is not accessible after 100 seconds")
+		}
+
 		// reset key path
 		r.Config.KeyPath = ""
 	}
 
 	// load account
-	conn := near.NewConnectionWithTimeout(r.Config.NodeURL, r.Timeout)
 	a, err := near.LoadAccount(conn, r.Config, r.Breakpoint.AccountID)
 	if err != nil {
 		return -1, -1, nil, err

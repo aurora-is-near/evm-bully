@@ -15,7 +15,6 @@ import (
 	"github.com/aurora-is-near/evm-bully/util/gnumake"
 	"github.com/aurora-is-near/near-api-go"
 	"github.com/aurora-is-near/near-api-go/utils"
-	"github.com/ethereum/go-ethereum/log"
 	"github.com/frankbraun/codechain/util/file"
 )
 
@@ -76,8 +75,18 @@ func ReplayTx(
 	}
 	defer nearDaemon.Stop()
 
-	log.Info("sleep")
-	time.Sleep(5 * time.Second)
+	if err := os.Setenv("NEAR_ENV", "local"); err != nil {
+		return err
+	}
+	cfg := near.GetConfig()
+	c := near.NewConnection(cfg.NodeURL)
+	nearStarted := checkUntilTrue(time.Second*100, "near node is not up yet", func() bool {
+		_, err := c.GetNodeStatus()
+		return err == nil
+	})
+	if !nearStarted {
+		return fmt.Errorf("replayer: near node is not reachable after 100 seconds")
+	}
 
 	// copy credentials file
 	home, err := os.UserHomeDir()
@@ -112,11 +121,6 @@ func ReplayTx(
 		return err
 	}
 
-	if err := os.Setenv("NEAR_ENV", "local"); err != nil {
-		return err
-	}
-	cfg := near.GetConfig()
-	c := near.NewConnection(cfg.NodeURL)
 	// TODO: why validator_key.json and test.near here?
 	cfg.KeyPath = filepath.Join(home, ".near", "local", "validator_key.json")
 	a, err := near.LoadAccount(c, cfg, "test.near")
