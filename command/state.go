@@ -29,7 +29,7 @@ func State(argv0 string, args ...string) error {
 	}
 	accountID := fs.Arg(0)
 	c := near.NewConnection(cfg.NodeURL)
-	res, err := c.State(accountID)
+	res, err := c.GetAccountState(accountID)
 	if err != nil {
 		return err
 	}

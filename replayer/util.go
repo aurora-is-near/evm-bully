@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/big"
 	"path/filepath"
+	"time"
 
 	"github.com/aurora-is-near/evm-bully/util/git"
 	"github.com/ethereum/go-ethereum/log"
@@ -41,4 +42,15 @@ func bigIntToRawU256(b *big.Int) (RawU256, error) {
 	// the encoding is already big-endian
 	copy(res[32-len(bytes):], bytes[:])
 	return res, nil
+}
+
+func checkUntilTrue(timeout time.Duration, msg string, predicate func() bool) bool {
+	for start := time.Now(); time.Since(start) < timeout; {
+		if predicate() {
+			return true
+		}
+		log.Info(fmt.Sprintf("%v, sleeping for 1 second...", msg))
+		time.Sleep(time.Second)
+	}
+	return false
 }
