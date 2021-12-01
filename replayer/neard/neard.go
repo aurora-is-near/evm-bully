@@ -142,7 +142,7 @@ func (daemon *NEARDaemon) editConfig() error {
 		{[]string{"consensus", "doomslug_step_period", "secs"}, "0"},
 		{[]string{"consensus", "doomslug_step_period", "nanos"}, "10000000"},
 	}
-	return editJsonFile(filename, edits)
+	return editJSONFile(filename, edits)
 }
 
 // SetupLocalData initializes local data of a NEARDaemon.

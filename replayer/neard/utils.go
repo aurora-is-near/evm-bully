@@ -11,7 +11,7 @@ type jsonEdit struct {
 	Value string
 }
 
-func editJsonFile(filename string, edits []*jsonEdit) error {
+func editJSONFile(filename string, edits []*jsonEdit) error {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return err
