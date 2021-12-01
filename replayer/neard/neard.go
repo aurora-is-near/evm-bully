@@ -2,7 +2,6 @@
 package neard
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -122,31 +121,28 @@ func (daemon *NEARDaemon) init() error {
 	return cmd.Run()
 }
 
-func (daemon *NEARDaemon) editGenesis() error {
-	filename := filepath.Join(daemon.localDir, "genesis.json")
-	backup := filepath.Join(daemon.localDir, "genesis_old.json")
+func (daemon *NEARDaemon) editConfig() error {
+	filename := filepath.Join(daemon.localDir, "config.json")
+	backup := filepath.Join(daemon.localDir, "config_old.json")
 	if err := file.Copy(filename, backup); err != nil {
 		return err
 	}
-	// read file
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return err
+
+	edits := []*jsonEdit{
+		{[]string{"rpc", "polling_config", "polling_interval", "secs"}, "0"},
+		{[]string{"rpc", "polling_config", "polling_interval", "nanos"}, "5000000"},
+		{[]string{"consensus", "block_production_tracking_delay", "secs"}, "0"},
+		{[]string{"consensus", "block_production_tracking_delay", "nanos"}, "10000000"},
+		{[]string{"consensus", "min_block_production_delay", "secs"}, "0"},
+		{[]string{"consensus", "min_block_production_delay", "nanos"}, "10000000"},
+		{[]string{"consensus", "max_block_production_delay", "secs"}, "0"},
+		{[]string{"consensus", "max_block_production_delay", "nanos"}, "50000000"},
+		{[]string{"consensus", "catchup_step_period", "secs"}, "0"},
+		{[]string{"consensus", "catchup_step_period", "nanos"}, "10000000"},
+		{[]string{"consensus", "doomslug_step_period", "secs"}, "0"},
+		{[]string{"consensus", "doomslug_step_period", "nanos"}, "10000000"},
 	}
-	// change default values the brute force way, neard chokes on edited JSON
-	data = bytes.Replace(data,
-		[]byte("\"max_gas_burnt\": 200000000000000"),
-		[]byte("\"max_gas_burnt\": 800000000000000"),
-		1)
-	data = bytes.Replace(data,
-		[]byte("\"max_total_prepaid_gas\": 300000000000000"),
-		[]byte("\"max_total_prepaid_gas\": 800000000000000"),
-		1)
-	// write file
-	if err := os.WriteFile(filename, data, 0644); err != nil {
-		return err
-	}
-	return nil
+	return editJSONFile(filename, edits)
 }
 
 // SetupLocalData initializes local data of a NEARDaemon.
@@ -163,7 +159,7 @@ func (daemon *NEARDaemon) SetupLocalData() error {
 	}
 
 	// edit genesis.json
-	if err := daemon.editGenesis(); err != nil {
+	if err := daemon.editConfig(); err != nil {
 		return err
 	}
 
