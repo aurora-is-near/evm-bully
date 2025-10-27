@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: runs-on=${{ github.run_id }}/family=c5a.2xlarge+c6a.2xlarge/image=ubuntu24-full-x64
     steps:
     - uses: actions/checkout@v2
     - run: make
